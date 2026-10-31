@@ -71,5 +71,11 @@ The test track now has dedicated overlapping road collision strips beneath the r
 The prototype circuit includes gravel runoff bands. Driving through gravel at speed progressively adds a gravel-coloured layer to the four visible prototype tyre meshes; driving back on asphalt gradually clears it. There is no gravel-contamination meter. Off-track behaviour should be communicated through handling, speed, surface visuals and the circuit environment, consistent with F1 26.
 
 
+## Real Grand Prix circuits
+
+The race-weekend selector now loads real-world centerline geometry for Circuit of the Americas, Red Bull Ring, Silverstone, Monza, Spa-Francorchamps, Suzuka, Albert Park, Bahrain and the Hungaroring. Track road width, road collision, kerbs, start/finish gate and grid marks are generated from the sourced geometry. The oval remains a separate physics test circuit and is not presented as a Grand Prix venue.
+
+Circuit geometry provenance and limitations are documented in [data/circuits/README.md](data/circuits/README.md). These layouts use an open research dataset derived from OpenStreetMap and are not official FIA-certified data. Elevation, detailed pit lanes, run-off, and venue-specific scenery remain to be built and validated.
+
 ## Circuit accuracy standard
 Circuit layouts must be based on verified reference data, never hand-invented approximations. Use current FIA event circuit maps and pit-lane drawings as the primary reference for corner order, start/finish, sectors, pit entry/exit and circuit-specific markings. Cross-check centreline geometry and published lap length against a traceable geospatial dataset or official circuit material. Build the drivable road, kerbs, runoff, barriers, elevation and facilities from that source data. Record each circuit's source, layout year and verification status. The existing procedural oval is only a physics test track and must not be presented as a real Grand Prix circuit.
