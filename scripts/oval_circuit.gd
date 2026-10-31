@@ -12,6 +12,7 @@ var start_heading: float = 0.0
 func _ready() -> void:
 	_build_ground()
 	_build_road()
+	_build_track_markings()
 	_build_curbs()
 	_build_barriers()
 	_build_grid_marks()
@@ -68,9 +69,30 @@ func _build_road() -> void:
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	var road := MeshInstance3D.new()
 	road.mesh = mesh
-	var asphalt := StandardMaterial3D.new()
-	asphalt.albedo_color = Color(0.105, 0.112, 0.125)
-	asphalt.roughness = 0.92
+	var asphalt_shader := Shader.new()
+	asphalt_shader.code = """
+shader_type spatial;
+render_mode diffuse_burley, specular_schlick_ggx;
+varying vec3 track_world_position;
+void vertex() {
+    track_world_position = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+}
+float hash21(vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+}
+void fragment() {
+    vec2 cell = floor(track_world_position.xz * 5.0);
+    float grain = hash21(cell) * 0.075;
+    float variation = sin(track_world_position.x * 0.17) * sin(track_world_position.z * 0.13) * 0.012;
+    vec3 asphalt = vec3(0.073, 0.080, 0.091) + grain + variation;
+    ALBEDO = asphalt;
+    ROUGHNESS = 0.94;
+}
+"""
+	var asphalt := ShaderMaterial.new()
+	asphalt.shader = asphalt_shader
 	road.material_override = asphalt
 	add_child(road)
 
@@ -149,7 +171,7 @@ func _build_grid_marks() -> void:
 	mat.albedo_color = Color(0.92, 0.93, 0.94)
 	line.material_override = mat
 	line.position = Vector3(half_length, 0.06, 0.0)
-	line.rotation.y = PI * 0.5
+	line.rotation.y = 0.0
 	add_child(line)
 
 	for slot in range(20):
@@ -160,5 +182,31 @@ func _build_grid_marks() -> void:
 		var mark_mat := StandardMaterial3D.new()
 		mark_mat.albedo_color = Color(0.88, 0.89, 0.9)
 		mark.material_override = mark_mat
-		mark.position = Vector3(half_length - 5.0 - float(slot / 2) * 4.5, 0.065, -3.2 if slot % 2 == 0 else 3.2)
+		mark.position = Vector3(half_length - 3.2 if slot % 2 == 0 else half_length + 3.2, 0.065, -5.0 - float(slot / 2) * 4.5)
 		add_child(mark)
+
+func _build_track_markings() -> void:
+	var line_mesh := BoxMesh.new()
+	line_mesh.size = Vector3(0.22, 0.035, 2.4)
+	var multimesh := MultiMesh.new()
+	multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	multimesh.mesh = line_mesh
+	multimesh.instance_count = segments * 2
+	var index := 0
+	for i in range(segments):
+		var t := float(i) / float(segments)
+		var next_t := float(i + 1) / float(segments)
+		var center := _center_at(t)
+		var tangent := (_center_at(next_t) - center).normalized()
+		var yaw := atan2(tangent.x, tangent.z)
+		for side_sign in [-1.0, 1.0]:
+			var point := center + _side_at(t) * (road_width * 0.5 - 0.28) * side_sign
+			multimesh.set_instance_transform(index, Transform3D(Basis(Vector3.UP, yaw), point + Vector3.UP * 0.055))
+			index += 1
+	var markings := MultiMeshInstance3D.new()
+	markings.multimesh = multimesh
+	var paint := StandardMaterial3D.new()
+	paint.albedo_color = Color(0.88, 0.89, 0.87)
+	paint.roughness = 0.82
+	markings.material_override = paint
+	add_child(markings)
