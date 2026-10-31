@@ -58,3 +58,13 @@ The latest pass adds a procedural asphalt surface shader, continuous track-edge 
 
 ## Graphics settings pass
 The settings page now exposes Low, Medium, High and Ultra presets, 3D render scale, fullscreen mode and VSync. Changes apply immediately and are saved to the local user settings file. These controls are implemented in code but still need in-engine validation on supported renderers and hardware.
+
+
+## Storage and launch performance targets
+- [ ] Keep the complete installed game footprint below **10 GB**, including shipped core assets. Measure the actual exported build as content grows.
+- [ ] Use efficient texture/audio/model formats, shared assets and compression; remove duplicate or unused content instead of reducing visual detail indiscriminately.
+- [ ] Make optional high-volume content downloadable separately only where that meaningfully protects the core install size.
+- [ ] Make the main menu appear quickly: load menu-critical resources first and defer or stream track, garage and race-only assets.
+- [ ] Keep network checks, update checks and content downloads from blocking the initial launch; show their status asynchronously.
+- [ ] Profile cold-start and repeat-start times, then optimise real bottlenecks, shader compilation and resource loading without imposing a graphics-quality ceiling.
+- [ ] Verify both installed size and startup time from a clean exported build; do not mark either target complete until measured.
