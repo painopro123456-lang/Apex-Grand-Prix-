@@ -267,7 +267,6 @@ func _calculate_fastest_racing_path() -> void:
 	_racing_path.clear()
 	_racing_target_speeds.clear()
 	_racing_cumulative_distances.clear()
-	_racing_color_states.clear()
 	var offsets := PackedFloat32Array()
 	offsets.resize(count)
 	for i in range(count):
