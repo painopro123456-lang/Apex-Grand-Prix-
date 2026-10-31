@@ -154,7 +154,7 @@ func _build_kerbs() -> void:
 		var yaw := atan2(tangent.x, tangent.y)
 		var normal := _normal_at(i)
 		for side in [-1.0, 1.0]:
-			var edge := points[i] + normal * (left_widths[i] if side > 0.0 else -right_widths[i]) * side
+			var edge: Vector2 = points[i] + normal * (left_widths[i] if side > 0.0 else -right_widths[i]) * side
 			var pos := Vector3(edge.x, 0.11, edge.y)
 			multi.set_instance_transform(index, Transform3D(Basis(Vector3.UP, yaw), pos))
 			multi.set_instance_color(index, Color("#d71920") if (i / 2) % 2 == 0 else Color("#eeeeea"))
@@ -179,8 +179,8 @@ func _build_runoff_and_barriers() -> void:
 		var normal := _normal_at(i)
 		for side in [-1.0, 1.0]:
 			var width := left_widths[i] if side > 0.0 else right_widths[i]
-			var edge := a + normal * width * side
-			var barrier_center := edge + normal * side * 13.0
+			var edge: Vector2 = a + normal * width * side
+			var barrier_center: Vector2 = edge + normal * side * 13.0
 			var wall := StaticBody3D.new()
 			var visual := MeshInstance3D.new()
 			var box := BoxMesh.new()
