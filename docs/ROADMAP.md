@@ -76,3 +76,19 @@ The test circuit now uses overlapping oriented collision strips under the visibl
 
 ## Gravel traps and tyre contamination prototype
 The oval test circuit now has gravel runoff bands outside both track edges. The car samples its lateral distance from the circuit centreline; driving through the gravel at speed builds a visible gravel-coloured overlay on its four prototype tyre meshes. Once back on asphalt, the gravel overlay gradually fades as the tyres shed the stones. The HUD reports gravel contamination. This prototype still needs in-engine visual and handling tests; realistic individual stone adhesion, tyre pickup by each wheel, and gravel spray are future refinements.
+
+
+## Verified circuit construction (required standard)
+- [ ] Replace the procedural oval as the player-facing venue; retain it only as a clearly labelled physics test circuit if useful.
+- [ ] Build each Grand Prix circuit from a traceable centreline/layout source and the correct season/layout revision—never by eyeballing or inventing corner sequences.
+- [ ] Use FIA event circuit maps and pit-lane drawings as primary references for corner numbers/order, start/finish, sector boundaries, pit entry/exit, marshal points and circuit-specific zones.
+- [ ] Cross-check geospatial centreline geometry and official published circuit length. Do not treat a simple map trace as sufficient proof of full accuracy.
+- [ ] Reconstruct track width, kerbs, runoff, gravel, barriers, elevation and pit facilities using circuit-specific measurements/references.
+- [ ] Store source URLs, layout year, source licence/attribution, measured lap length and verification status alongside each circuit's data.
+- [ ] Add a circuit validation check comparing generated centreline length to the published circuit length; flag significant mismatch rather than silently scaling an inaccurate layout.
+- [ ] Only label a circuit "verified" after its geometry and key facilities have been checked against the references.
+
+### Initial reference sources
+- FIA circuit maps and event documents: https://www.fia.com/documents/circuit-maps
+- Example official 2026 Melbourne circuit map and circuit data: https://www.fia.com/system/files/decision-document/2026_australian_grand_prix_-_competition_notes_-_circuit_map_pit_lane_drawing_emergency_exits_map_and_quarantine_zone.pdf
+- Unofficial F1 circuit centreline GeoJSON catalogue (MIT-licensed; must be cross-checked against official references): https://github.com/SergioSediq/f1-circuits
