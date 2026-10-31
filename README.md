@@ -73,7 +73,7 @@ The prototype circuit includes gravel runoff bands. Driving through gravel at sp
 
 ## Real Grand Prix circuits
 
-The race-weekend selector now loads real-world centerline geometry for Circuit of the Americas, Red Bull Ring, Silverstone, Monza, Spa-Francorchamps, Suzuka, Albert Park, Bahrain and the Hungaroring. Track road width, road collision, kerbs, start/finish gate and grid marks are generated from the sourced geometry. The oval remains a separate physics test circuit and is not presented as a Grand Prix venue.
+The race-weekend selector now loads real-world centerline geometry for Circuit of the Americas, Red Bull Ring, Silverstone, Monza, Spa-Francorchamps, Suzuka, Albert Park, Bahrain, the Hungaroring, Circuit Gilles-Villeneuve and Shanghai. Track road width, road collision, kerbs, start/finish gate and grid marks are generated from the sourced geometry. The oval remains a separate physics test circuit and is not presented as a Grand Prix venue.
 
 Circuit geometry provenance and limitations are documented in [data/circuits/README.md](data/circuits/README.md). These layouts use an open research dataset derived from OpenStreetMap and are not official FIA-certified data. Elevation, detailed pit lanes, run-off, and venue-specific scenery remain to be built and validated.
 
