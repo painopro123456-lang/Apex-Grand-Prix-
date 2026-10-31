@@ -63,6 +63,27 @@ func _run_gameplay_smoke() -> void:
 		push_error("Gameplay smoke test: racing line visibility toggle did not restore the guide.")
 		quit(1)
 		return
+	circuit.update_racing_line_feedback(Vector3(circuit.get("_racing_path")[0].x, 0.0, circuit.get("_racing_path")[0].y), circuit.get("_racing_target_speeds")[0] + 100.0)
+	var racing_colors: MultiMesh = racing_line.multimesh
+	if racing_colors.get_instance_color(0) != Color("#ff3939"):
+		push_error("Gameplay smoke test: racing line did not turn red when the car exceeded the local target speed.")
+		quit(1)
+		return
+	circuit.update_racing_line_feedback(Vector3(circuit.get("_racing_path")[0].x, 0.0, circuit.get("_racing_path")[0].y), 0.0)
+	if racing_colors.get_instance_color(0) != Color("#42e58b"):
+		push_error("Gameplay smoke test: racing line did not return to green after slowing below the local target speed.")
+		quit(1)
+		return
+	var distant_index := -1
+	var cumulative: PackedFloat32Array = circuit.get("_racing_cumulative_distances")
+	for i in range(cumulative.size() - 1):
+		if cumulative[i] > 300.0:
+			distant_index = i
+			break
+	if distant_index >= 0 and racing_colors.get_instance_color(distant_index) != Color("#42e58b"):
+		push_error("Gameplay smoke test: speed feedback incorrectly recoloured the distant racing line.")
+		quit(1)
+		return
 	game.call("_show_frontend_page", "garage")
 	if not bool(frontend.get_node("GaragePage").visible):
 		push_error("Gameplay smoke test: garage page did not open.")
