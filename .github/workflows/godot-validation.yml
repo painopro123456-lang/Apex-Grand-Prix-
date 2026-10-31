@@ -54,6 +54,17 @@ jobs:
             exit 1
           fi
 
+      - name: Test barrier crashes, damage and retirement
+        shell: bash
+        run: |
+          set -o pipefail
+          xvfb-run -a env LIBGL_ALWAYS_SOFTWARE=1 godot --audio-driver Dummy --path . --script res://tests/crash_collision_smoke.gd 2>&1 | tee /tmp/godot-crash.log
+          if grep -E "SCRIPT ERROR:|Parse Error:|Compile Error:|ERROR:" /tmp/godot-crash.log; then
+            echo "Crash collision test reported script or runtime errors."
+            exit 1
+          fi
+          grep -q "CRASH SMOKE PASS" /tmp/godot-crash.log
+
       - name: Test race start and player acceleration
         shell: bash
         run: |
