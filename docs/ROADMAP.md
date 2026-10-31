@@ -18,7 +18,8 @@ This roadmap separates what exists from what is planned. A feature is not consid
 - [ ] Four-wheel suspension, wheel contact, tyre slip curves and brake temperature
 - [ ] Better collision response, damage and recovery
 - [ ] Track boundaries, off-track grip, kerbs and runoff penalties
-- [ ] Lap detection, sector timing, best lap and session results
+- [x] Start/finish crossing detection, lap counter and best-lap timing (prototype gate)
+- [ ] Sector timing, invalid-lap detection and session results
 - [ ] AI opponents with racing line, overtaking and defending
 - [ ] Race control: yellow flags, safety car, penalties and pit lane
 
@@ -34,7 +35,8 @@ This roadmap separates what exists from what is planned. A feature is not consid
 ## Visual and audio quality
 - [ ] High-detail original or properly licensed car assets
 - [ ] Detailed circuit assets and trackside environments
-- [ ] PBR materials, improved lighting, reflections and shadows
+- [x] Procedural asphalt shader with surface grain, painted track-edge markings, filmic tonemapping and glow
+- [ ] Full PBR asset set, reflections, volumetrics and high-end shadow tuning
 - [ ] Cockpit camera, TV cameras, replay and photo mode
 - [ ] Engine, tyre, wind, crowd and pit audio
 - [ ] Scalable graphics presets and performance profiling on target hardware
@@ -47,3 +49,7 @@ This roadmap separates what exists from what is planned. A feature is not consid
 
 ## Quality gate
 No feature is marked done based only on code being committed. It must be opened in Godot, tested in motion, and checked for regressions. The current prototype has not yet been validated in-engine or benchmarked on the 4 GB RAM / integrated-GPU target.
+
+
+## Current implementation note
+The latest pass adds a procedural asphalt surface shader, continuous track-edge paint, improved lighting/post-processing, corrected start-line orientation and a first start/finish lap gate with best-lap display. These are still prototype systems: the lap gate needs validation through a complete lap in Godot, and the project still needs a purpose-built high-detail car asset, suspension, AI and real circuit content.
