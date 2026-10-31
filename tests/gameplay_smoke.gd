@@ -33,8 +33,8 @@ func _run_gameplay_smoke() -> void:
 		return
 	var circuit_picker := game.get("track_picker") as OptionButton
 	var circuit := game.get("current_track") as RealCircuit
-	if circuit_picker == null or circuit == null or circuit_picker.item_count != 9:
-		push_error("Gameplay smoke test: expected nine selectable real-world circuits.")
+	if circuit_picker == null or circuit == null or circuit_picker.item_count != 11:
+		push_error("Gameplay smoke test: expected eleven selectable real-world circuits.")
 		quit(1)
 		return
 	if circuit.lap_length_m < 1000.0 or circuit.points.size() < 20:
@@ -131,5 +131,5 @@ func _run_gameplay_smoke() -> void:
 		quit(1)
 		return
 
-	print("GAMEPLAY SMOKE PASS: front end, garage/settings navigation, roster, nine real circuit geometries and selection, five-light start, acceleration (%.1f km/h), DRS, ERS, tyre wear, braking, lap/best-lap gate and reset." % acceleration_speed)
+	print("GAMEPLAY SMOKE PASS: front end, garage/settings navigation, roster, eleven real circuit geometries and selection, five-light start, acceleration (%.1f km/h), DRS, ERS, tyre wear, braking, lap/best-lap gate and reset." % acceleration_speed)
 	quit(0)
