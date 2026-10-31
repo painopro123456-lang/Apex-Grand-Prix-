@@ -30,6 +30,9 @@ var speed_kmh: float = 0.0
 var crash_damage: float = 0.0
 var retired: bool = false
 var impact_cooldown: float = 0.0
+var gravel_load: float = 0.0
+var circuit: Node = null
+var tyre_gravel_overlays: Array[MeshInstance3D] = []
 var throttle_input: float = 0.0
 var brake_input: float = 0.0
 var steer_input: float = 0.0
@@ -53,6 +56,7 @@ func _ready() -> void:
 	floor_snap_length = 1.0
 	floor_max_angle = deg_to_rad(55.0)
 	_heading = rotation.y
+	_build_tyre_visuals()
 
 func _physics_process(delta: float) -> void:
 	if retired:
@@ -68,6 +72,7 @@ func _physics_process(delta: float) -> void:
 	_process_impact_collisions(impact_velocity)
 	speed_kmh = absf(_longitudinal_speed) * 3.6
 	_update_tyre_model(delta)
+	_update_gravel_contamination(delta)
 
 func _read_controls() -> void:
 	throttle_input = Input.get_action_strength("accelerate")
@@ -167,6 +172,57 @@ func _process_impact_collisions(incoming_velocity: Vector3) -> void:
 			velocity = Vector3.ZERO
 		break
 
+
+func set_circuit(track_node: Node) -> void:
+	circuit = track_node
+
+func _build_tyre_visuals() -> void:
+	var tyre_material := StandardMaterial3D.new()
+	tyre_material.albedo_color = Color(0.025, 0.027, 0.03)
+	tyre_material.roughness = 0.96
+	var gravel_material := StandardMaterial3D.new()
+	gravel_material.albedo_color = Color(0.42, 0.34, 0.23)
+	gravel_material.roughness = 1.0
+	for x in [-1.02, 1.02]:
+		for z in [-1.48, 1.48]:
+			var tyre := MeshInstance3D.new()
+			var tyre_mesh := TorusMesh.new()
+			tyre_mesh.inner_radius = 0.29
+			tyre_mesh.outer_radius = 0.43
+			tyre_mesh.rings = 16
+			tyre_mesh.ring_segments = 12
+			tyre.mesh = tyre_mesh
+			tyre.material_override = tyre_material
+			tyre.position = Vector3(x, -0.22, z)
+			tyre.rotation.z = PI * 0.5
+			add_child(tyre)
+			var gravel_overlay := MeshInstance3D.new()
+			var overlay_mesh := TorusMesh.new()
+			overlay_mesh.inner_radius = 0.305
+			overlay_mesh.outer_radius = 0.445
+			overlay_mesh.rings = 16
+			overlay_mesh.ring_segments = 12
+			gravel_overlay.mesh = overlay_mesh
+			gravel_overlay.material_override = gravel_material
+			gravel_overlay.position = tyre.position
+			gravel_overlay.rotation = tyre.rotation
+			gravel_overlay.scale = Vector3.ONE * 0.001
+			add_child(gravel_overlay)
+			tyre_gravel_overlays.append(gravel_overlay)
+
+func _update_gravel_contamination(delta: float) -> void:
+	var on_gravel := false
+	if is_instance_valid(circuit) and circuit.has_method("is_on_gravel"):
+		on_gravel = circuit.is_on_gravel(global_position)
+	if on_gravel and speed_kmh > 8.0:
+		gravel_load = minf(1.0, gravel_load + delta * 0.42)
+	else:
+		var cleaning_rate := 0.018 if speed_kmh < 5.0 else 0.045
+		gravel_load = maxf(0.0, gravel_load - delta * cleaning_rate)
+	for overlay in tyre_gravel_overlays:
+		var visual_scale := 0.001 + gravel_load * 0.999
+		overlay.scale = Vector3.ONE * visual_scale
+
 func _update_tyre_model(delta: float) -> void:
 	var slip_heat := absf(steer_input) * absf(_longitudinal_speed) * 0.018
 	var brake_heat := brake_input * 7.0
@@ -187,3 +243,6 @@ func reset_vehicle(at_position: Vector3, heading: float = 0.0) -> void:
 	crash_damage = 0.0
 	retired = false
 	impact_cooldown = 0.0
+	gravel_load = 0.0
+	for overlay in tyre_gravel_overlays:
+		overlay.scale = Vector3.ONE * 0.001
