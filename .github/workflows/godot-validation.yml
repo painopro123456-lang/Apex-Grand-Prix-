@@ -58,7 +58,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          xvfb-run -a env LIBGL_ALWAYS_SOFTWARE=1 godot --audio-driver Dummy --path . --script res://tests/crash_collision_smoke.gd 2>&1 | tee /tmp/godot-crash.log
+          xvfb-run -a env LIBGL_ALWAYS_SOFTWARE=1 godot --rendering-method gl_compatibility --rendering-driver opengl3 --audio-driver Dummy --path . --script res://tests/crash_collision_smoke.gd 2>&1 | tee /tmp/godot-crash.log
           if grep -E "SCRIPT ERROR:|Parse Error:|Compile Error:|ERROR:" /tmp/godot-crash.log; then
             echo "Crash collision test reported script or runtime errors."
             exit 1
@@ -69,7 +69,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          xvfb-run -a env LIBGL_ALWAYS_SOFTWARE=1 godot --audio-driver Dummy --path . --script res://tests/gameplay_smoke.gd 2>&1 | tee /tmp/godot-gameplay.log
+          xvfb-run -a env LIBGL_ALWAYS_SOFTWARE=1 godot --rendering-method gl_compatibility --rendering-driver opengl3 --audio-driver Dummy --path . --script res://tests/gameplay_smoke.gd 2>&1 | tee /tmp/godot-gameplay.log
           if grep -E "SCRIPT ERROR:|Parse Error:|Compile Error:|ERROR:" /tmp/godot-gameplay.log; then
             echo "Gameplay smoke test reported script or runtime errors."
             exit 1
