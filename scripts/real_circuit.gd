@@ -366,38 +366,51 @@ func _build_racing_line() -> void:
 	_racing_line.material_override = material
 	add_child(_racing_line)
 
+func _get_racing_progress(car_position: Vector2) -> Vector2:
+	# Project onto every path segment. Using the nearest vertex alone can jump
+	# between samples on tight corners and incorrectly classify the next zone
+	# as being almost a full lap ahead.
+	var count := _racing_path.size()
+	var best_distance_squared := INF
+	var best_segment := 0
+	var best_segment_fraction := 0.0
+	for i in range(count):
+		var a := _racing_path[i]
+		var b := _racing_path[(i + 1) % count]
+		var segment := b - a
+		var fraction := clampf((car_position - a).dot(segment) / maxf(segment.length_squared(), 0.0001), 0.0, 1.0)
+		var closest := a + segment * fraction
+		var distance_squared := car_position.distance_squared_to(closest)
+		if distance_squared < best_distance_squared:
+			best_distance_squared = distance_squared
+			best_segment = i
+			best_segment_fraction = fraction
+	var segment_distance := _racing_cumulative_distances[best_segment + 1] - _racing_cumulative_distances[best_segment]
+	var progress_distance := _racing_cumulative_distances[best_segment] + segment_distance * best_segment_fraction
+	return Vector2(float(best_segment), progress_distance)
+
+func _get_racing_line_color_state(index: int, progress_distance: float, speed_kmh: float) -> int:
+	var lap_distance := _racing_cumulative_distances[_racing_path.size()]
+	var forward_distance := _racing_cumulative_distances[index] - progress_distance
+	if forward_distance < 0.0:
+		forward_distance += lap_distance
+	if forward_distance > RACING_LINE_LOOKAHEAD_M:
+		return 0
+	var target_speed := _racing_target_speeds[index]
+	if speed_kmh > target_speed + 8.0:
+		return 2 # red / brake
+	if speed_kmh > target_speed - 8.0:
+		return 1 # yellow / lift
+	return 0 # green / accelerate
+
 func update_racing_line_feedback(world_position: Vector3, speed_kmh: float) -> void:
 	if _racing_multimesh == null or _racing_path.is_empty() or _racing_cumulative_distances.size() != _racing_path.size() + 1:
 		return
 
-	# Locate the player's progress along the ideal racing path, not just the
-	# nearest track-centre point. Only the upcoming section reacts to live speed.
-	var nearest_index := 0
-	var nearest_distance_squared := INF
-	var car_position := Vector2(world_position.x, world_position.z)
+	var progress := _get_racing_progress(Vector2(world_position.x, world_position.z))
+	var progress_distance := progress.y
 	for i in range(_racing_path.size()):
-		var distance_squared := car_position.distance_squared_to(_racing_path[i])
-		if distance_squared < nearest_distance_squared:
-			nearest_distance_squared = distance_squared
-			nearest_index = i
-
-	var lap_distance := _racing_cumulative_distances[_racing_path.size()]
-	var player_distance := _racing_cumulative_distances[nearest_index]
-	var count := _racing_path.size()
-	for i in range(count):
-		var forward_distance := _racing_cumulative_distances[i] - player_distance
-		if forward_distance < 0.0:
-			forward_distance += lap_distance
-
-		# Outside the forward look-ahead, keep the guide neutral green. This
-		# prevents one speed reading from repainting the whole circuit at once.
-		var state := 0 # green / accelerate
-		if forward_distance <= RACING_LINE_LOOKAHEAD_M:
-			var target_speed := _racing_target_speeds[i]
-			if speed_kmh > target_speed + 8.0:
-				state = 2 # red / brake
-			elif speed_kmh > target_speed - 8.0:
-				state = 1 # yellow / lift
+		var state := _get_racing_line_color_state(i, progress_distance, speed_kmh)
 		if _racing_color_states[i] == state:
 			continue
 		_racing_color_states[i] = state
