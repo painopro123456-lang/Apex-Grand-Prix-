@@ -3,7 +3,7 @@ extends Node3D
 const CarScript = preload("res://scripts/f1_car.gd")
 const TrackScript = preload("res://scripts/oval_circuit.gd")
 
-var car: CharacterBody3D
+var car: F1CarController
 var camera: Camera3D
 var hud: CanvasLayer
 var countdown_label: Label
