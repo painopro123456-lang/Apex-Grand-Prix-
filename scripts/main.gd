@@ -33,6 +33,10 @@ var countdown_step: int = -1
 var countdown_timer: float = 0.0
 var lights_out_delay: float = 0.0
 var race_started: bool = false
+var race_finished: bool = false
+var result_layer: CanvasLayer
+var result_title_label: Label
+var result_body_label: Label
 var race_time: float = 0.0
 var lap_number: int = 0
 var lap_time: float = 0.0
@@ -93,6 +97,7 @@ func _ready() -> void:
 	_build_camera()
 	_build_hud()
 	_build_frontend()
+	_build_race_results()
 	hud.visible = false
 	last_car_position = car.global_position
 	# The player enters the race from the front end, not automatically.
@@ -390,6 +395,8 @@ func _update_hud(delta: float) -> void:
 			lap_time += delta
 	speed_label.text = "%03d" % int(car.speed_kmh)
 	telemetry_label.text = "GEAR %d   RPM %05d\nERS %02d%%   TYRES %d°C   WEAR %d%%\nDRS %s   DAMAGE %d%%" % [car.current_gear, int(car.engine_rpm), int(car.ers_charge), int(car.tyre_temperature), int(car.tyre_wear * 100.0), "OPEN" if car.drs_active else "CLOSED", int(car.crash_damage)]
+	if car.retired and race_started and not race_finished:
+		_finish_race(true)
 	if car.retired:
 		status_label.text = "DNF  /  CAR RETIRED"
 	race_time_label.text = _format_time(race_time)
@@ -414,6 +421,8 @@ func _update_lap_detection(delta: float) -> void:
 				best_lap_time = lap_time
 			lap_time = 0.0
 		lap_number += 1
+		if lap_number >= 5:
+			_finish_race(false)
 	last_car_position = current_position
 
 
@@ -889,14 +898,89 @@ func _on_track_selected(index: int) -> void:
 	if frontend_page_body != null:
 		frontend_page_body.text = "%s  /  %s     •     %.2f KM" % [circuit_catalog[index]["name"], circuit_catalog[index]["country"], current_track.lap_length_m / 1000.0]
 
+
+func _build_race_results() -> void:
+	result_layer = CanvasLayer.new()
+	result_layer.layer = 30
+	add_child(result_layer)
+	var root := Control.new()
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	result_layer.add_child(root)
+	var backdrop := ColorRect.new()
+	backdrop.color = Color(0.008, 0.014, 0.024, 0.94)
+	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.add_child(backdrop)
+	var panel := _panel(root, Vector2.ZERO, Vector2(620, 360))
+	panel.anchor_left = 0.5
+	panel.anchor_right = 0.5
+	panel.anchor_top = 0.5
+	panel.anchor_bottom = 0.5
+	panel.position = Vector2(-310, -180)
+	_accent_bar(panel, Vector2(0, 0), Vector2(620, 4), Color(0.88, 0.12, 0.13))
+	var kicker := _label(panel, "APEX GRAND PRIX  /  RACE CONTROL", 10, Color(0.62, 0.72, 0.84))
+	kicker.position = Vector2(34, 30)
+	result_title_label = _label(panel, "RACE FINISHED", 34, Color.WHITE)
+	result_title_label.position = Vector2(32, 68)
+	result_body_label = _label(panel, "Your race summary will appear here.", 14, Color(0.72, 0.79, 0.87))
+	result_body_label.position = Vector2(36, 128)
+	result_body_label.size = Vector2(540, 72)
+	var menu_button := _frontend_button(panel, "RETURN TO MAIN MENU", true)
+	menu_button.position = Vector2(34, 260)
+	menu_button.size = Vector2(250, 48)
+	menu_button.pressed.connect(_return_to_main_menu)
+	var again_button := _frontend_button(panel, "RACE AGAIN", false)
+	again_button.position = Vector2(304, 260)
+	again_button.size = Vector2(250, 48)
+	again_button.pressed.connect(_restart_race)
+	result_layer.visible = false
+
+func _finish_race(did_retire: bool) -> void:
+	if race_finished:
+		return
+	race_finished = true
+	race_started = false
+	countdown_step = -1
+	car.set_physics_process(false)
+	hud.visible = false
+	result_title_label.text = "DID NOT FINISH" if did_retire else "RACE FINISHED"
+	var best := _format_time(best_lap_time) if best_lap_time > 0.0 else "NO VALID LAP"
+	result_body_label.text = ("Your car was retired after %d laps.\n" % lap_number if did_retire else "You completed the five-lap Grand Prix.\n") + "RACE TIME  %s     /     BEST LAP  %s" % [_format_time(race_time), best]
+	result_layer.visible = true
+
+func _return_to_main_menu() -> void:
+	result_layer.visible = false
+	frontend_layer.visible = true
+	hud.visible = false
+	_show_frontend_page("home")
+	car.set_physics_process(false)
+	car.reset_vehicle(current_track.start_position, current_track.start_heading)
+	last_car_position = car.global_position
+	race_started = false
+	race_finished = false
+	countdown_step = -1
+	race_time = 0.0
+	lap_number = 0
+	lap_time = 0.0
+	best_lap_time = 0.0
+	for light in start_lights:
+		light.color = Color(0.12, 0.025, 0.035)
+	countdown_label.text = ""
+
+func _restart_race() -> void:
+	_return_to_main_menu()
+	_show_frontend_page("race")
+
 func _enter_race() -> void:
+	result_layer.visible = false
 	frontend_layer.visible = false
 	hud.visible = true
 	car.reset_vehicle(current_track.start_position, current_track.start_heading)
 	last_car_position = car.global_position
 	car.set_physics_process(false)
 	race_started = false
+	race_finished = false
 	race_time = 0.0
 	lap_number = 0
 	lap_time = 0.0
+	best_lap_time = 0.0
 	_begin_start_sequence()
