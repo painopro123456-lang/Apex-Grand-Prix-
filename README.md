@@ -69,3 +69,7 @@ The test track now has dedicated overlapping road collision strips beneath the r
 
 ## Gravel runoff and tyre pickup
 The prototype circuit includes gravel runoff bands. Driving through gravel at speed progressively adds a gravel-coloured layer to the four visible prototype tyre meshes; driving back on asphalt gradually clears it. The HUD shows a gravel contamination percentage. This is an early visual/gameplay effect, not yet per-wheel physical stone simulation, and it has not yet been validated in Godot.
+
+
+## Circuit accuracy standard
+Circuit layouts must be based on verified reference data, never hand-invented approximations. Use current FIA event circuit maps and pit-lane drawings as the primary reference for corner order, start/finish, sectors, pit entry/exit and circuit-specific markings. Cross-check centreline geometry and published lap length against a traceable geospatial dataset or official circuit material. Build the drivable road, kerbs, runoff, barriers, elevation and facilities from that source data. Record each circuit's source, layout year and verification status. The existing procedural oval is only a physics test track and must not be presented as a real Grand Prix circuit.
