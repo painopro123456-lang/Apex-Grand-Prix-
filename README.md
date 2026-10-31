@@ -30,7 +30,7 @@ This is still an early prototype. It does not yet contain production-quality F1 
 4. Run `scenes/main.tscn` (F6) or the project (F5).
 
 ## Performance direction
-The project starts on Godot's Compatibility renderer to support a wider range of integrated GPUs. Future quality settings should scale shadows, reflections, crowd density, trackside detail and render resolution independently. The 4 GB RAM / integrated graphics target remains a performance goal, not a verified benchmark yet.
+The project starts on Godot's Compatibility renderer to support a wider range of integrated GPUs. The goal is to optimise the game without imposing an integrated-graphics-only visual ceiling. The settings page now offers Low, Medium, High and Ultra graphics presets, 3D render scale, fullscreen mode and VSync. These controls are implemented but have not yet been validated in-engine.
 
 The garage currently provides the interface shell and selectable configuration categories. The detailed 3D car presentation and functional aerodynamic/tyre setup controls are still in development; the UI does not pretend those systems are finished.
 
@@ -53,3 +53,6 @@ The current prototype now includes a procedural asphalt shader with fine surface
 
 The project does **not** yet contain a finished high-detail open-wheel vehicle, real-world circuit recreations, AI field, pit stops, wet-weather simulation, damage, or a complete race-weekend flow. Those remain active development targets; no claim of AAA graphics or a verified 4 GB performance result is being made.
 \n\nThe 2026 team and driver roster follows Formula 1's published 2026 grid. Team names, driver names and numbers are factual references; this independent project is not affiliated with Formula 1 or the teams. The current car selection is roster/chassis metadata only—the game still needs original, high-detail 3D car models and team liveries.\n
+
+## Graphics options
+The Settings page includes four quality presets, adjustable 3D render scale (50%, 75%, 100%, 125%), fullscreen and VSync. Options are applied immediately and persisted locally. Further controls for textures, anti-aliasing, reflections and effects can be added as the rendering pipeline grows.
