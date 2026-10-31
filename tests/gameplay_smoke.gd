@@ -47,6 +47,21 @@ func _run_gameplay_smoke() -> void:
 		push_error("Gameplay smoke test: circuit selection did not load Monza geometry.")
 		quit(1)
 		return
+	var racing_line := circuit.get_node_or_null("RacingLineGuide") as MeshInstance3D
+	if racing_line == null or racing_line.mesh == null:
+		push_error("Gameplay smoke test: racing line mesh was not generated.")
+		quit(1)
+		return
+	circuit.set_racing_line_visible(false)
+	if racing_line.visible:
+		push_error("Gameplay smoke test: racing line visibility toggle did not hide the guide.")
+		quit(1)
+		return
+	circuit.set_racing_line_visible(true)
+	if not racing_line.visible:
+		push_error("Gameplay smoke test: racing line visibility toggle did not restore the guide.")
+		quit(1)
+		return
 	game.call("_show_frontend_page", "garage")
 	if not bool(frontend.get_node("GaragePage").visible):
 		push_error("Gameplay smoke test: garage page did not open.")
@@ -144,5 +159,5 @@ func _run_gameplay_smoke() -> void:
 		quit(1)
 		return
 
-	print("GAMEPLAY SMOKE PASS: front end, garage/settings navigation, roster, eleven real circuits, five-light start, acceleration (%.1f km/h), DRS, ERS, tyre wear, braking, lap timing, reset, DNF results and return to main menu." % acceleration_speed)
+	print("GAMEPLAY SMOKE PASS: front end, garage/settings navigation, roster, eleven real circuits, coloured racing line toggle, five-light start, acceleration (%.1f km/h), DRS, ERS, tyre wear, braking, lap timing, reset, DNF results and return to main menu." % acceleration_speed)
 	quit(0)
