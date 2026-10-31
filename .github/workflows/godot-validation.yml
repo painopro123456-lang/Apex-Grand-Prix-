@@ -32,7 +32,21 @@ jobs:
           godot --version
 
       - name: Import project and validate scripts/resources
-        run: godot --headless --editor --path . --quit
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --editor --path . --quit 2>&1 | tee /tmp/godot-import.log
+          if grep -E "SCRIPT ERROR:|Parse Error:|Compile Error:|ERROR:" /tmp/godot-import.log; then
+            echo "Godot import reported script or resource errors."
+            exit 1
+          fi
 
       - name: Launch main scene for smoke test
-        run: godot --headless --path . --quit-after 300
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 300 2>&1 | tee /tmp/godot-startup.log
+          if grep -E "SCRIPT ERROR:|Parse Error:|Compile Error:|ERROR:" /tmp/godot-startup.log; then
+            echo "Godot startup reported script or runtime errors."
+            exit 1
+          fi
