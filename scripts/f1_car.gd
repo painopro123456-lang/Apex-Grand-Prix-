@@ -30,7 +30,6 @@ var speed_kmh: float = 0.0
 var crash_damage: float = 0.0
 var retired: bool = false
 var impact_cooldown: float = 0.0
-var gravel_load: float = 0.0
 var circuit: Node = null
 var tyre_gravel_overlays: Array[MeshInstance3D] = []
 var throttle_input: float = 0.0
@@ -72,7 +71,6 @@ func _physics_process(delta: float) -> void:
 	_process_impact_collisions(impact_velocity)
 	speed_kmh = absf(_longitudinal_speed) * 3.6
 	_update_tyre_model(delta)
-	_update_gravel_contamination(delta)
 
 func _read_controls() -> void:
 	throttle_input = Input.get_action_strength("accelerate")
@@ -210,19 +208,6 @@ func _build_tyre_visuals() -> void:
 			add_child(gravel_overlay)
 			tyre_gravel_overlays.append(gravel_overlay)
 
-func _update_gravel_contamination(delta: float) -> void:
-	var on_gravel := false
-	if is_instance_valid(circuit) and circuit.has_method("is_on_gravel"):
-		on_gravel = circuit.is_on_gravel(global_position)
-	if on_gravel and speed_kmh > 8.0:
-		gravel_load = minf(1.0, gravel_load + delta * 0.42)
-	else:
-		var cleaning_rate := 0.018 if speed_kmh < 5.0 else 0.045
-		gravel_load = maxf(0.0, gravel_load - delta * cleaning_rate)
-	for overlay in tyre_gravel_overlays:
-		var visual_scale := 0.001 + gravel_load * 0.999
-		overlay.scale = Vector3.ONE * visual_scale
-
 func _update_tyre_model(delta: float) -> void:
 	var slip_heat := absf(steer_input) * absf(_longitudinal_speed) * 0.018
 	var brake_heat := brake_input * 7.0
@@ -243,6 +228,5 @@ func reset_vehicle(at_position: Vector3, heading: float = 0.0) -> void:
 	crash_damage = 0.0
 	retired = false
 	impact_cooldown = 0.0
-	gravel_load = 0.0
 	for overlay in tyre_gravel_overlays:
 		overlay.scale = Vector3.ONE * 0.001
