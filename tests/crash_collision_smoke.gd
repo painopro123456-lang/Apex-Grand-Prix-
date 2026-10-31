@@ -1,11 +1,13 @@
 extends SceneTree
 
+const CarScript = preload("res://scripts/f1_car.gd")
+
 ## Exercises the real Godot physics collision path against a static barrier.
 func _initialize() -> void:
 	call_deferred("_run_crash_smoke")
 
 func _run_crash_smoke() -> void:
-	var car := F1CarController.new()
+	var car = CarScript.new()
 	car.name = "CrashTestCar"
 	var car_shape := CollisionShape3D.new()
 	var car_box := BoxShape3D.new()
