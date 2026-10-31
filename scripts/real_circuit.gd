@@ -14,6 +14,7 @@ var points: PackedVector2Array = PackedVector2Array()
 var left_widths: PackedFloat32Array = PackedFloat32Array()
 var right_widths: PackedFloat32Array = PackedFloat32Array()
 var road_width_average: float = 13.0
+var _racing_line: MeshInstance3D
 
 func _ready() -> void:
 	_load_geometry()
@@ -28,6 +29,7 @@ func _ready() -> void:
 	_build_runoff_and_barriers()
 	_build_start_line()
 	_build_grid_boxes()
+	_build_racing_line()
 
 func _load_geometry() -> void:
 	var path := "res://data/circuits/%s.csv" % circuit_id
@@ -230,6 +232,62 @@ func _build_grid_boxes() -> void:
 		mark.position = Vector3(p.x, 0.065, p.y)
 		mark.rotation.y = atan2(tangent.x, tangent.y)
 		add_child(mark)
+
+
+func _build_racing_line() -> void:
+	# Coloured guide ribbon follows each circuit's real centreline.
+	var vertices := PackedVector3Array()
+	var indices := PackedInt32Array()
+	var colors := PackedColorArray()
+	for i in range(points.size()):
+		var previous := points[(i - 1 + points.size()) % points.size()]
+		var current := points[i]
+		var next := points[(i + 1) % points.size()]
+		var incoming := (current - previous).normalized()
+		var outgoing := (next - current).normalized()
+		var cross_value := incoming.x * outgoing.y - incoming.y * outgoing.x
+		var turn_angle := absf(atan2(cross_value, incoming.dot(outgoing)))
+		var segment_length := maxf((current.distance_to(previous) + current.distance_to(next)) * 0.5, 0.5)
+		var curvature := turn_angle / segment_length
+		var line_color := Color("#42e58b")
+		if curvature >= 0.018:
+			line_color = Color("#ff4b43")
+		elif curvature >= 0.008:
+			line_color = Color("#ffd34e")
+		var normal := _normal_at(i)
+		var left := current + normal * 0.42
+		var right := current - normal * 0.42
+		vertices.append(Vector3(left.x, 0.105, left.y))
+		vertices.append(Vector3(right.x, 0.105, right.y))
+		colors.append(line_color)
+		colors.append(line_color)
+		var following := (i + 1) % points.size()
+		var a := i * 2
+		var b := following * 2
+		indices.append_array(PackedInt32Array([a, b, a + 1, a + 1, b, b + 1]))
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_COLOR] = colors
+	arrays[Mesh.ARRAY_INDEX] = indices
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	var line := MeshInstance3D.new()
+	line.name = "RacingLineGuide"
+	line.mesh = mesh
+	var material := StandardMaterial3D.new()
+	material.vertex_color_use_as_albedo = true
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.emission_enabled = true
+	material.emission = Color.WHITE
+	material.emission_energy_multiplier = 0.35
+	line.material_override = material
+	add_child(line)
+	_racing_line = line
+
+func set_racing_line_visible(enabled: bool) -> void:
+	if is_instance_valid(_racing_line):
+		_racing_line.visible = enabled
 
 func has_crossed_start_line(previous: Vector3, current: Vector3) -> bool:
 	var origin := points[0]
