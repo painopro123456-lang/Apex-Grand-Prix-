@@ -106,6 +106,7 @@ func _build_car() -> void:
 	collider.shape = shape
 	car.add_child(collider)
 	add_child(car)
+	car.set_physics_process(false)
 
 func _build_camera() -> void:
 	camera = Camera3D.new()
@@ -233,6 +234,7 @@ func _update_start_sequence(delta: float) -> void:
 		status_label.text = "RACE SESSION  •  LIGHTS OUT"
 		race_started = true
 		race_time = 0.0
+		car.set_physics_process(true)
 
 func _update_hud(delta: float) -> void:
 	if car == null:
@@ -247,7 +249,8 @@ func _update_hud(delta: float) -> void:
 	lap_label.text = "LAP  %d / 5" % lap_number
 	best_lap_label.text = "BEST  %s" % (_format_time(best_lap_time) if best_lap_time > 0.0 else "--:--.---")
 	if Input.is_action_just_pressed("reset_car"):
-		car.reset_vehicle(Vector3(105, 1.0, 0), PI)
+		car.reset_vehicle(Vector3(105, 1.0, -8), PI)
+		last_car_position = car.global_position
 
 func _format_time(value: float) -> String:
 	var minutes := int(value / 60.0)
