@@ -15,6 +15,7 @@ var telemetry_label: Label
 var start_lights: Array[ColorRect] = []
 var countdown_step: int = -1
 var countdown_timer: float = 0.0
+var lights_out_delay: float = 0.0
 var race_started: bool = false
 var race_time: float = 0.0
 var lap_number: int = 0
@@ -315,27 +316,33 @@ func _label(parent: Control, text_value: String, font_size: int, color: Color) -
 func _begin_start_sequence() -> void:
 	countdown_step = 0
 	countdown_timer = 0.0
+	lights_out_delay = randf_range(0.8, 2.8)
 	countdown_label.text = "READY"
+	for light in start_lights:
+		light.color = Color(0.12, 0.025, 0.035)
 
 func _update_start_sequence(delta: float) -> void:
 	if race_started or countdown_step < 0:
 		return
 	countdown_timer += delta
-	if countdown_timer < 1.0:
-		return
-	countdown_timer = 0.0
-	countdown_step += 1
-	if countdown_step <= 5:
+	if countdown_step < 5:
+		if countdown_timer < 1.0:
+			return
+		countdown_timer -= 1.0
+		countdown_step += 1
 		start_lights[countdown_step - 1].color = Color(0.95, 0.035, 0.045)
-		countdown_label.text = str(countdown_step)
-	else:
-		for light in start_lights:
-			light.color = Color(0.16, 0.95, 0.48)
-		countdown_label.text = "GO!"
-		status_label.text = "RACE SESSION  •  LIGHTS OUT"
-		race_started = true
-		race_time = 0.0
-		car.set_physics_process(true)
+		if countdown_step == 5:
+			status_label.text = "START PROCEDURE  /  HOLD"
+		return
+	if countdown_timer < lights_out_delay:
+		return
+	for light in start_lights:
+		light.color = Color(0.12, 0.025, 0.035)
+	countdown_label.text = "LIGHTS OUT"
+	status_label.text = "RACE SESSION  •  LIGHTS OUT"
+	race_started = true
+	race_time = 0.0
+	car.set_physics_process(true)
 
 func _update_hud(delta: float) -> void:
 	if car == null:
