@@ -131,5 +131,18 @@ func _run_gameplay_smoke() -> void:
 		quit(1)
 		return
 
-	print("GAMEPLAY SMOKE PASS: front end, garage/settings navigation, roster, eleven real circuit geometries and selection, five-light start, acceleration (%.1f km/h), DRS, ERS, tyre wear, braking, lap/best-lap gate and reset." % acceleration_speed)
+	game.set("race_started", true)
+	car.retired = true
+	game.call("_update_hud", 1.0 / 60.0)
+	if not bool(game.get("race_finished")) or not bool(game.get("result_layer").visible):
+		push_error("Gameplay smoke test: retirement did not open the race results screen.")
+		quit(1)
+		return
+	game.call("_return_to_main_menu")
+	if not bool(game.get("frontend_layer").visible) or bool(game.get("result_layer").visible) or game.get("frontend_page") != "home" or car.retired:
+		push_error("Gameplay smoke test: returning from results did not restore the main menu and reset the car.")
+		quit(1)
+		return
+
+	print("GAMEPLAY SMOKE PASS: front end, garage/settings navigation, roster, eleven real circuits, five-light start, acceleration (%.1f km/h), DRS, ERS, tyre wear, braking, lap timing, reset, DNF results and return to main menu." % acceleration_speed)
 	quit(0)
