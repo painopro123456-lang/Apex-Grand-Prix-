@@ -79,7 +79,7 @@ func _build_car() -> void:
 	car = CarScript.new()
 	car.name = "PlayerCar"
 	car.position = Vector3(105, 1.0, 0)
-	car.rotation.y = PI * 0.5
+	car.rotation.y = PI
 	var collider := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
 	shape.size = Vector3(1.8, 0.8, 4.8)
@@ -156,8 +156,8 @@ func _build_hud() -> void:
 		lights_panel.add_child(light)
 		start_lights.append(light)
 
-func _panel(parent: Control, pos: Vector2, panel_size: Vector2) -> PanelContainer:
-	var panel := PanelContainer.new()
+func _panel(parent: Control, pos: Vector2, panel_size: Vector2) -> Panel:
+	var panel := Panel.new()
 	panel.position = pos
 	panel.size = panel_size
 	var style := StyleBoxFlat.new()
@@ -209,7 +209,7 @@ func _update_hud(delta: float) -> void:
 	speed_label.text = "%03d" % int(car.speed_kmh)
 	race_time_label.text = _format_time(race_time)
 	if Input.is_action_just_pressed("reset_car"):
-		car.reset_vehicle(Vector3(105, 1.0, 0), PI * 0.5)
+		car.reset_vehicle(Vector3(105, 1.0, 0), PI)
 
 func _format_time(value: float) -> String:
 	var minutes := int(value / 60.0)
