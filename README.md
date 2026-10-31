@@ -68,7 +68,7 @@ The test track now has dedicated overlapping road collision strips beneath the r
 
 
 ## Gravel runoff and tyre pickup
-The prototype circuit includes gravel runoff bands. Driving through gravel at speed progressively adds a gravel-coloured layer to the four visible prototype tyre meshes; driving back on asphalt gradually clears it. The HUD shows a gravel contamination percentage. This is an early visual/gameplay effect, not yet per-wheel physical stone simulation, and it has not yet been validated in Godot.
+The prototype circuit includes gravel runoff bands. Driving through gravel at speed progressively adds a gravel-coloured layer to the four visible prototype tyre meshes; driving back on asphalt gradually clears it. There is no gravel-contamination meter. Off-track behaviour should be communicated through handling, speed, surface visuals and the circuit environment, consistent with F1 26.
 
 
 ## Circuit accuracy standard
