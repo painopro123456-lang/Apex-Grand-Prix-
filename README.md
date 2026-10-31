@@ -65,3 +65,7 @@ The game should also reach the main menu quickly without sacrificing visual qual
 
 ## Collision and crash prototype
 The test track now has dedicated overlapping road collision strips beneath the rendered asphalt, plus solid barrier colliders. Significant impacts reduce speed, can deflect the car, accumulate crash damage and trigger a DNF when damage reaches the critical threshold. This is an early gameplay prototype; the car still uses a simple box collision body, and detailed deformable bodywork, wheel detachment, suspension damage, debris, recovery and full car-to-car testing are not complete.
+
+
+## Gravel runoff and tyre pickup
+The prototype circuit includes gravel runoff bands. Driving through gravel at speed progressively adds a gravel-coloured layer to the four visible prototype tyre meshes; driving back on asphalt gradually clears it. The HUD shows a gravel contamination percentage. This is an early visual/gameplay effect, not yet per-wheel physical stone simulation, and it has not yet been validated in Godot.
