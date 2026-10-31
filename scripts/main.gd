@@ -109,6 +109,8 @@ func _process(delta: float) -> void:
 	_update_hud(delta)
 	_update_start_sequence(delta)
 	_update_lap_detection(delta)
+	if current_track != null and car != null:
+		current_track.update_racing_line_feedback(car.global_position, car.speed_kmh)
 	if Input.is_action_just_pressed("toggle_racing_line"):
 		racing_line_enabled = not racing_line_enabled
 		if current_track != null:
