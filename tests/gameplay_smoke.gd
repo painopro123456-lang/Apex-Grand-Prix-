@@ -78,7 +78,7 @@ func _run_gameplay_smoke() -> void:
 		push_error("Gameplay smoke test: car did not accelerate; speed was %.2f km/h." % car.speed_kmh)
 		quit(1)
 		return
-	var acceleration_speed := car.speed_kmh
+	var acceleration_speed: float = car.speed_kmh
 
 	Input.action_press("accelerate")
 	Input.action_press("drs")
@@ -97,7 +97,7 @@ func _run_gameplay_smoke() -> void:
 		quit(1)
 		return
 
-	var speed_before_braking := car.speed_kmh
+	var speed_before_braking: float = car.speed_kmh
 	Input.action_press("brake")
 	for frame in range(30):
 		await physics_frame
@@ -110,9 +110,9 @@ func _run_gameplay_smoke() -> void:
 	game.set("lap_number", 1)
 	game.set("lap_time", 62.5)
 	var gate_point: Vector2 = circuit.points[0]
-	var gate_tangent := (circuit.points[1] - circuit.points[0]).normalized()
-	var before_gate := gate_point - gate_tangent * 2.0
-	var after_gate := gate_point + gate_tangent * 2.0
+	var gate_tangent: Vector2 = (circuit.points[1] - circuit.points[0]).normalized()
+	var before_gate: Vector2 = gate_point - gate_tangent * 2.0
+	var after_gate: Vector2 = gate_point + gate_tangent * 2.0
 	game.set("last_car_position", Vector3(before_gate.x, car.global_position.y, before_gate.y))
 	car.global_position = Vector3(after_gate.x, car.global_position.y, after_gate.y)
 	game.call("_update_lap_detection", 1.0 / 60.0)
