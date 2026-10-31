@@ -44,7 +44,9 @@ func _ready() -> void:
 	_build_frontend()
 	hud.visible = false
 	last_car_position = car.global_position
-	# The player enters the race from the front end, not automatically.\n\nfunc _process(delta: float) -> void:
+	# The player enters the race from the front end, not automatically.
+
+func _process(delta: float) -> void:
 	_update_camera(delta)
 	_update_hud(delta)
 	_update_start_sequence(delta)
