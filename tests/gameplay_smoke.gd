@@ -47,8 +47,8 @@ func _run_gameplay_smoke() -> void:
 		push_error("Gameplay smoke test: circuit selection did not load Monza geometry.")
 		quit(1)
 		return
-	var racing_line := circuit.get_node_or_null("RacingLineGuide") as MeshInstance3D
-	if racing_line == null or racing_line.mesh == null:
+	var racing_line := circuit.get_node_or_null("RacingLineGuide") as MultiMeshInstance3D
+	if racing_line == null or racing_line.multimesh == null or circuit.get("_racing_path").size() != circuit.points.size() or circuit.get("_racing_target_speeds").size() != circuit.points.size():
 		push_error("Gameplay smoke test: racing line mesh was not generated.")
 		quit(1)
 		return
@@ -58,6 +58,7 @@ func _run_gameplay_smoke() -> void:
 		quit(1)
 		return
 	circuit.set_racing_line_visible(true)
+	circuit.update_racing_line_feedback(car.global_position, 220.0)
 	if not racing_line.visible:
 		push_error("Gameplay smoke test: racing line visibility toggle did not restore the guide.")
 		quit(1)
