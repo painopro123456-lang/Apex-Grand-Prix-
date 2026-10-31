@@ -344,7 +344,9 @@ func _update_hud(delta: float) -> void:
 		if lap_number > 0:
 			lap_time += delta
 	speed_label.text = "%03d" % int(car.speed_kmh)
-	telemetry_label.text = "GEAR %d   RPM %05d\nERS %02d%%   TYRES %d°C   WEAR %d%%\nDRS %s" % [car.current_gear, int(car.engine_rpm), int(car.ers_charge), int(car.tyre_temperature), int(car.tyre_wear * 100.0), "OPEN" if car.drs_active else "CLOSED"]
+	telemetry_label.text = "GEAR %d   RPM %05d\nERS %02d%%   TYRES %d°C   WEAR %d%%\nDRS %s   DAMAGE %d%%" % [car.current_gear, int(car.engine_rpm), int(car.ers_charge), int(car.tyre_temperature), int(car.tyre_wear * 100.0), "OPEN" if car.drs_active else "CLOSED", int(car.crash_damage)]
+	if car.retired:
+		status_label.text = "DNF  /  CAR RETIRED"
 	race_time_label.text = _format_time(race_time)
 	lap_label.text = "LAP  %d / 5" % lap_number
 	best_lap_label.text = "BEST  %s" % (_format_time(best_lap_time) if best_lap_time > 0.0 else "--:--.---")
