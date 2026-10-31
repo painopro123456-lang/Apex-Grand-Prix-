@@ -340,7 +340,7 @@ func _build_racing_line() -> void:
 	var vertices := PackedVector3Array()
 	var colors := PackedColorArray()
 	var indices := PackedInt32Array()
-	var half_width := 0.38
+	var half_width := 0.22
 	var total_length := maxf(_racing_cumulative_distances[count], 1.0)
 	for i in range(count + 1):
 		var path_index := i % count
@@ -351,8 +351,8 @@ func _build_racing_line() -> void:
 		var point := _racing_path[path_index]
 		var left := point + normal * half_width
 		var right := point - normal * half_width
-		vertices.append(Vector3(left.x, 0.035, left.y))
-		vertices.append(Vector3(right.x, 0.035, right.y))
+		vertices.append(Vector3(left.x, 0.029, left.y))
+		vertices.append(Vector3(right.x, 0.029, right.y))
 		var distance := _racing_cumulative_distances[i]
 		var speed_value := _racing_target_speeds[path_index] / 330.0
 		var progress_value := distance / total_length
@@ -388,7 +388,6 @@ varying float path_distance;
 void vertex() {
 	target_speed = COLOR.r * 330.0;
 	path_distance = COLOR.g * lap_length;
-	VERTEX.y += 0.065;
 }
 
 void fragment() {
@@ -396,16 +395,15 @@ void fragment() {
 	float yellow_factor = smoothstep(target_speed - 10.0, target_speed - 2.0, speed_kmh)
 		* (1.0 - smoothstep(target_speed + 2.0, target_speed + 10.0, speed_kmh));
 	float red_factor = smoothstep(target_speed + 2.0, target_speed + 10.0, speed_kmh);
-	vec3 green = vec3(0.08, 0.92, 0.40);
-	vec3 yellow = vec3(1.0, 0.78, 0.08);
-	vec3 red = vec3(1.0, 0.055, 0.055);
+	vec3 green = vec3(0.16, 0.72, 0.34);
+	vec3 yellow = vec3(0.94, 0.72, 0.18);
+	vec3 red = vec3(0.86, 0.12, 0.12);
 	vec3 line_color = mix(green, yellow, yellow_factor);
 	line_color = mix(line_color, red, red_factor);
 	if (ahead > lookahead_m) {
 		line_color = green;
 	}
 	ALBEDO = line_color;
-	EMISSION = line_color * 0.12;
 }
 """
 	_racing_line_material = ShaderMaterial.new()
