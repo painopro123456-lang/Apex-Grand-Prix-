@@ -56,3 +56,9 @@ The project does **not** yet contain a finished high-detail open-wheel vehicle, 
 
 ## Graphics options
 The Settings page includes four quality presets, adjustable 3D render scale (50%, 75%, 100%, 125%), fullscreen and VSync. Options are applied immediately and persisted locally. Further controls for textures, anti-aliasing, reflections and effects can be added as the rendering pipeline grows.
+
+
+## Storage and startup targets
+The complete installed game must stay **under 10 GB**. This is a storage ceiling, not a graphics-quality target: do not strip detailed cars, circuit environments, textures or effects just to make the game smaller. Prefer efficient asset formats, sensible texture compression, shared materials, removal of duplicate/unused files and optional downloads for genuinely large extras. Track the installed footprint as content is added.
+
+The game should also reach the main menu quickly without sacrificing visual quality. Keep startup work lean: load only menu-critical resources first, move nonessential work off the critical startup path, avoid blocking network checks or content downloads, and stream heavier track/race assets when needed. Profile cold and warm startup times and optimise measured bottlenecks rather than lowering graphics settings by default.
