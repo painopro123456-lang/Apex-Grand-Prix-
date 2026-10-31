@@ -12,6 +12,7 @@ var start_heading: float = 0.0
 func _ready() -> void:
 	_build_ground()
 	_build_road()
+	_build_curbs()
 	_build_barriers()
 	_build_grid_marks()
 
@@ -78,6 +79,38 @@ func _build_road() -> void:
 	road_collision.shape = mesh.create_trimesh_shape()
 	road_body.add_child(road_collision)
 	add_child(road_body)
+
+
+func _build_curbs() -> void:
+	var curb_mesh := BoxMesh.new()
+	curb_mesh.size = Vector3(2.5, 0.16, 1.15)
+	var multimesh := MultiMesh.new()
+	multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	multimesh.use_colors = true
+	multimesh.mesh = curb_mesh
+	multimesh.instance_count = segments * 2
+	var instance := 0
+	for i in range(segments):
+		var t := float(i) / float(segments)
+		var next_t := float(i + 1) / float(segments)
+		var center := _center_at(t)
+		var side := _side_at(t)
+		var tangent := (_center_at(next_t) - center).normalized()
+		var yaw := atan2(tangent.x, tangent.z)
+		for side_sign in [-1.0, 1.0]:
+			var curb_position := center + side * (road_width * 0.5 + 0.75) * side_sign
+			var basis := Basis(Vector3.UP, yaw)
+			multimesh.set_instance_transform(instance, Transform3D(basis, curb_position + Vector3.UP * 0.1))
+			var stripe_color := Color(0.82, 0.045, 0.055) if (i / 3) % 2 == 0 else Color(0.92, 0.92, 0.9)
+			multimesh.set_instance_color(instance, stripe_color)
+			instance += 1
+	var curbs := MultiMeshInstance3D.new()
+	curbs.multimesh = multimesh
+	var curb_material := StandardMaterial3D.new()
+	curb_material.vertex_color_use_as_albedo = true
+	curb_material.roughness = 0.86
+	curbs.material_override = curb_material
+	add_child(curbs)
 
 func _build_barriers() -> void:
 	for side_sign in [-1.0, 1.0]:
