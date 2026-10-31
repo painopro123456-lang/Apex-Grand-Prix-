@@ -16,7 +16,9 @@ var circuit_catalog: Array[Dictionary] = [
 	{"id":"Suzuka","name":"Suzuka International Racing Course","country":"Japan"},
 	{"id":"Melbourne","name":"Albert Park Circuit","country":"Australia"},
 	{"id":"Sakhir","name":"Bahrain International Circuit","country":"Bahrain"},
-	{"id":"Budapest","name":"Hungaroring","country":"Hungary"}
+	{"id":"Budapest","name":"Hungaroring","country":"Hungary"},
+	{"id":"Montreal","name":"Circuit Gilles-Villeneuve","country":"Canada"},
+	{"id":"Shanghai","name":"Shanghai International Circuit","country":"China"}
 ]
 var camera: Camera3D
 var hud: CanvasLayer
