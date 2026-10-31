@@ -782,6 +782,8 @@ func _update_garage_selection() -> void:
 	if team_data.is_empty():
 		return
 	var team: Dictionary = team_data[selected_team_index]
+	if car != null:
+		car.set_livery(team["color"])
 	var drivers: Array = team["drivers"]
 	var driver: Dictionary = drivers[selected_driver_index]
 	if team_title_label != null:
