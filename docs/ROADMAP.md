@@ -72,3 +72,7 @@ The settings page now exposes Low, Medium, High and Ultra presets, 3D render sca
 
 ## Crash and collision prototype
 The test circuit now uses overlapping oriented collision strips under the visible asphalt instead of relying on a thin triangle-mesh road collider. The car records significant horizontal impacts against solid collision bodies, loses speed, can yaw away from the impact, accumulates damage, and retires with a DNF at critical damage. This is a first collision pass—not yet a complete crash simulation. Car-to-car impact testing, wheel/suspension damage, recovery, debris and deformable bodywork remain unfinished. Validate the road seams, barrier response and impact thresholds in Godot before treating this as production-ready.
+
+
+## Gravel traps and tyre contamination prototype
+The oval test circuit now has gravel runoff bands outside both track edges. The car samples its lateral distance from the circuit centreline; driving through the gravel at speed builds a visible gravel-coloured overlay on its four prototype tyre meshes. Once back on asphalt, the gravel overlay gradually fades as the tyres shed the stones. The HUD reports gravel contamination. This prototype still needs in-engine visual and handling tests; realistic individual stone adhesion, tyre pickup by each wheel, and gravel spray are future refinements.
