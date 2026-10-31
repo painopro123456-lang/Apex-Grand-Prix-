@@ -33,7 +33,7 @@ func _run_crash_smoke() -> void:
 	car.global_position = Vector3(4.2, 0.0, 0.0)
 	car._longitudinal_speed = 35.0
 	car.velocity = Vector3(35.0, 0.0, 0.0)
-	var incoming_velocity := car.velocity
+	var incoming_velocity: Vector3 = car.velocity
 	car.move_and_slide()
 	if car.get_slide_collision_count() == 0:
 		push_error("Crash smoke test: car did not physically collide with the barrier.")
@@ -54,8 +54,8 @@ func _run_crash_smoke() -> void:
 		quit(1)
 		return
 
-	var moderate_damage := car.crash_damage
-	var post_impact_speed := car._longitudinal_speed
+	var moderate_damage: float = car.crash_damage
+	var post_impact_speed: float = car._longitudinal_speed
 
 	# A second severe impact must reach the retirement threshold.
 	car.impact_cooldown = 0.0
