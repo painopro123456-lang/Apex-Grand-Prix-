@@ -16,8 +16,8 @@ This roadmap separates what exists from what is planned. A feature is not consid
 ## Next: core driving experience
 - [ ] Replace the placeholder collision body with a detailed, properly rigged open-wheel car model
 - [ ] Four-wheel suspension, wheel contact, tyre slip curves and brake temperature
-- [ ] Better collision response, damage and recovery
-- [ ] Track boundaries, off-track grip, kerbs and runoff penalties
+- [x] Stable road collision strips and solid barrier collision bodies (prototype; needs in-engine impact testing)\n- [x] Basic impact response, accumulating crash damage and damage-triggered DNF (prototype; needs tuning/testing)\n- [ ] Detailed deformable bodywork, wheel detachment, suspension breakage and recovery system
+- [ ] Track limits, off-track grip, kerbs, runoff and gravel-trap behaviour
 - [x] Start/finish crossing detection, lap counter and best-lap timing (prototype gate)
 - [ ] Sector timing, invalid-lap detection and session results
 - [ ] AI opponents with racing line, overtaking and defending
@@ -68,3 +68,7 @@ The settings page now exposes Low, Medium, High and Ultra presets, 3D render sca
 - [ ] Keep network checks, update checks and content downloads from blocking the initial launch; show their status asynchronously.
 - [ ] Profile cold-start and repeat-start times, then optimise real bottlenecks, shader compilation and resource loading without imposing a graphics-quality ceiling.
 - [ ] Verify both installed size and startup time from a clean exported build; do not mark either target complete until measured.
+
+
+## Crash and collision prototype
+The test circuit now uses overlapping oriented collision strips under the visible asphalt instead of relying on a thin triangle-mesh road collider. The car records significant horizontal impacts against solid collision bodies, loses speed, can yaw away from the impact, accumulates damage, and retires with a DNF at critical damage. This is a first collision pass—not yet a complete crash simulation. Car-to-car impact testing, wheel/suspension damage, recovery, debris and deformable bodywork remain unfinished. Validate the road seams, barrier response and impact thresholds in Godot before treating this as production-ready.
