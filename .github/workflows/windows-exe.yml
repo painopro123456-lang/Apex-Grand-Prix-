@@ -43,11 +43,11 @@ jobs:
           mkdir -p "$HOME/.local/share/godot/export_templates/4.3.stable"
           cp -a /tmp/godot-templates/templates/. "$HOME/.local/share/godot/export_templates/4.3.stable/"
 
-      - name: Import project resources
+      - name: Validate project resources
         shell: bash
         run: |
           set -o pipefail
-          godot --headless --editor --path . --import 2>&1 | tee /tmp/godot-import.log
+          godot --headless --editor --path . --quit 2>&1 | tee /tmp/godot-import.log
           if grep -E "SCRIPT ERROR:|Parse Error:|Compile Error:|ERROR:" /tmp/godot-import.log; then
             echo "Godot import reported errors."
             exit 1
