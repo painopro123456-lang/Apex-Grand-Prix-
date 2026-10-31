@@ -53,3 +53,14 @@ jobs:
             echo "Godot startup reported script or runtime errors."
             exit 1
           fi
+
+      - name: Test race start and player acceleration
+        shell: bash
+        run: |
+          set -o pipefail
+          xvfb-run -a env LIBGL_ALWAYS_SOFTWARE=1 godot --audio-driver Dummy --path . --script res://tests/gameplay_smoke.gd 2>&1 | tee /tmp/godot-gameplay.log
+          if grep -E "SCRIPT ERROR:|Parse Error:|Compile Error:|ERROR:" /tmp/godot-gameplay.log; then
+            echo "Gameplay smoke test reported script or runtime errors."
+            exit 1
+          fi
+          grep -q "GAMEPLAY SMOKE PASS" /tmp/godot-gameplay.log
