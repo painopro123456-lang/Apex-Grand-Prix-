@@ -3,8 +3,8 @@ extends Node3D
 const CarScript = preload("res://scripts/f1_car.gd")
 const RealCircuitScript = preload("res://scripts/real_circuit.gd")
 
-var car: F1CarController
-var current_track: RealCircuit
+var car
+var current_track
 var track_picker: OptionButton
 var selected_track_id: String = "Austin"
 var circuit_catalog: Array[Dictionary] = [
@@ -201,8 +201,8 @@ func _build_camera() -> void:
 func _update_camera(delta: float) -> void:
 	if car == null or camera == null:
 		return
-	var forward := -car.global_transform.basis.z
-	var target_position := car.global_position - forward * 11.0 + Vector3.UP * 5.0
+	var forward: Vector3 = -car.global_transform.basis.z
+	var target_position: Vector3 = car.global_position - forward * 11.0 + Vector3.UP * 5.0
 	camera.global_position = camera.global_position.lerp(target_position, 1.0 - exp(-5.0 * delta))
 	camera.look_at(car.global_position + forward * 5.0 + Vector3.UP * 1.0, Vector3.UP)
 	var speed_ratio := clampf(car.speed_kmh / 350.0, 0.0, 1.0)
@@ -407,7 +407,7 @@ func _format_time(value: float) -> String:
 func _update_lap_detection(delta: float) -> void:
 	if car == null:
 		return
-	var current_position := car.global_position
+	var current_position: Vector3 = car.global_position
 	if race_started and current_track != null and current_track.has_crossed_start_line(last_car_position, current_position):
 		if lap_number > 0 and lap_time > 5.0:
 			if best_lap_time <= 0.0 or lap_time < best_lap_time:
