@@ -29,6 +29,7 @@ var frontend_page: String = "home"
 var frontend_page_title: Label
 var frontend_page_body: Label
 var garage_status: Label
+var garage_item_label: Label
 var selected_garage_item: String = "APEX GP-01"
 
 func _ready() -> void:
@@ -366,6 +367,7 @@ func _build_frontend() -> void:
 	header_style.set_border_width_all(1)
 	header_style.set_corner_radius_all(7)
 	header.add_theme_stylebox_override("panel", header_style)
+	header.name = "Header"
 	frontend_root.add_child(header)
 
 	var logo := _label(header, "APEX", 25, Color(0.96, 0.97, 0.99))
@@ -386,6 +388,7 @@ func _build_frontend() -> void:
 	nav.position = Vector2(42, 112)
 	nav.size = Vector2(650, 44)
 	nav.add_theme_constant_override("separation", 8)
+	nav.name = "MainNavigation"
 	frontend_root.add_child(nav)
 	_add_frontend_nav(nav, "HOME", "home")
 	_add_frontend_nav(nav, "RACE WEEKEND", "race")
@@ -400,6 +403,7 @@ func _build_frontend() -> void:
 	frontend_page_body.size = Vector2(720, 30)
 
 	var feature := _panel(frontend_root, Vector2(52, 340), Vector2(700, 300))
+	feature.name = "FeatureCard"
 	var feature_style := StyleBoxFlat.new()
 	feature_style.bg_color = Color(0.045, 0.058, 0.075, 0.98)
 	feature_style.border_color = Color(0.22, 0.27, 0.34, 0.9)
@@ -422,6 +426,7 @@ func _build_frontend() -> void:
 	start_button.pressed.connect(_enter_race)
 
 	var side := _panel(frontend_root, Vector2(784, 218), Vector2(350, 422))
+	side.name = "TeamCard"
 	var side_title := _label(side, "YOUR TEAM", 11, Color(0.62, 0.7, 0.79))
 	side_title.position = Vector2(22, 22)
 	var team_name := _label(side, "APEX MOTORSPORT", 21, Color.WHITE)
@@ -443,6 +448,13 @@ func _build_frontend() -> void:
 	garage_button.position = Vector2(22, 340)
 	garage_button.size = Vector2(306, 42)
 	garage_button.pressed.connect(func(): _show_frontend_page("garage"))
+
+	var race_action := _frontend_button(frontend_root, "ENTER THE COCKPIT", true)
+	race_action.position = Vector2(58, 340)
+	race_action.size = Vector2(250, 44)
+	race_action.name = "RaceAction"
+	race_action.visible = false
+	race_action.pressed.connect(_enter_race)
 
 	var footer := _label(frontend_root, "APEX GRAND PRIX     •     DEVELOPMENT BUILD", 9, Color(0.39, 0.45, 0.54))
 	footer.anchor_top = 1.0
@@ -523,8 +535,8 @@ func _build_garage_page() -> void:
 	var setup := _panel(garage, Vector2(772, 315), Vector2(362, 325))
 	var setup_title := _label(setup, "CAR CONFIGURATION", 11, Color(0.67, 0.74, 0.82))
 	setup_title.position = Vector2(22, 22)
-	var selected := _label(setup, selected_garage_item, 23, Color.WHITE)
-	selected.position = Vector2(22, 58)
+	garage_item_label = _label(setup, selected_garage_item, 23, Color.WHITE)
+	garage_item_label.position = Vector2(22, 58)
 	garage_status = _label(setup, "FACTORY SPECIFICATION", 9, Color(0.58, 0.68, 0.78))
 	garage_status.position = Vector2(24, 94)
 	var setup_rule := ColorRect.new()
@@ -549,6 +561,8 @@ func _select_garage_item(item: String) -> void:
 	selected_garage_item = item
 	if garage_status != null:
 		garage_status.text = "SETUP OPTIONS COMING IN THE VEHICLE SETUP PASS"
+	if garage_item_label != null:
+		garage_item_label.text = item
 
 func _show_frontend_page(page: String) -> void:
 	frontend_page = page
@@ -558,9 +572,13 @@ func _show_frontend_page(page: String) -> void:
 	if garage_page != null:
 		garage_page.visible = page == "garage"
 	for child in frontend_root.get_children():
-		if child is Panel or child is HBoxContainer:
-			if child.name != "GaragePage":
-				child.visible = page == "home"
+		if child.name == "Header" or child.name == "MainNavigation":
+			child.visible = true
+		elif child.name == "FeatureCard" or child.name == "TeamCard":
+			child.visible = page == "home"
+	var race_action := frontend_root.get_node_or_null("RaceAction")
+	if race_action != null:
+		race_action.visible = page == "race"
 	frontend_page_title.visible = page != "garage"
 	frontend_page_body.visible = page != "garage"
 	if page == "home":
