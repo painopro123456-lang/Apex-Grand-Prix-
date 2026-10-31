@@ -63,14 +63,20 @@ func _run_gameplay_smoke() -> void:
 		push_error("Gameplay smoke test: racing line visibility toggle did not restore the guide.")
 		quit(1)
 		return
-	circuit.update_racing_line_feedback(Vector3(circuit.get("_racing_path")[0].x, 0.0, circuit.get("_racing_path")[0].y), circuit.get("_racing_target_speeds")[0] + 100.0)
+	var racing_path: PackedVector2Array = circuit.get("_racing_path")
+	var racing_targets: PackedFloat32Array = circuit.get("_racing_target_speeds")
+	var probe_position := Vector3(racing_path[0].x, 0.0, racing_path[0].y)
+	var probe_progress: Vector2 = circuit.call("_get_racing_progress", Vector2(probe_position.x, probe_position.z))
+	var probe_index := int(probe_progress.x)
+	var probe_target := racing_targets[probe_index]
+	circuit.update_racing_line_feedback(probe_position, probe_target + 100.0)
 	var racing_colors: MultiMesh = racing_line.multimesh
-	if racing_colors.get_instance_color(0) != Color("#ff3939"):
-		push_error("Gameplay smoke test: racing line did not turn red when the car exceeded the local target speed.")
+	if circuit.call("_get_racing_line_color_state", probe_index, probe_progress.y, probe_target + 100.0) != 2 or racing_colors.get_instance_color(probe_index) != Color("#ff3939"):
+		push_error("Gameplay smoke test: racing line did not turn red in the car's projected segment when speed exceeded its local target.")
 		quit(1)
 		return
-	circuit.update_racing_line_feedback(Vector3(circuit.get("_racing_path")[0].x, 0.0, circuit.get("_racing_path")[0].y), 0.0)
-	if racing_colors.get_instance_color(0) != Color("#42e58b"):
+	circuit.update_racing_line_feedback(probe_position, 0.0)
+	if circuit.call("_get_racing_line_color_state", probe_index, probe_progress.y, 0.0) != 0 or racing_colors.get_instance_color(probe_index) != Color("#42e58b"):
 		push_error("Gameplay smoke test: racing line did not return to green after slowing below the local target speed.")
 		quit(1)
 		return
