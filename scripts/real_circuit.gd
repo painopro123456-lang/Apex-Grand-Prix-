@@ -340,7 +340,7 @@ func _build_racing_line() -> void:
 	var vertices := PackedVector3Array()
 	var colors := PackedColorArray()
 	var indices := PackedInt32Array()
-	var half_width := 0.22
+	var half_width := 0.30
 	var total_length := maxf(_racing_cumulative_distances[count], 1.0)
 	for i in range(count + 1):
 		var path_index := i % count
@@ -351,8 +351,8 @@ func _build_racing_line() -> void:
 		var point := _racing_path[path_index]
 		var left := point + normal * half_width
 		var right := point - normal * half_width
-		vertices.append(Vector3(left.x, 0.029, left.y))
-		vertices.append(Vector3(right.x, 0.029, right.y))
+		vertices.append(Vector3(left.x, 0.19, left.y))
+		vertices.append(Vector3(right.x, 0.19, right.y))
 		var distance := _racing_cumulative_distances[i]
 		var speed_value := _racing_target_speeds[path_index] / 330.0
 		var progress_value := distance / total_length
@@ -375,7 +375,7 @@ func _build_racing_line() -> void:
 	var shader := Shader.new()
 	shader.code = """
 shader_type spatial;
-render_mode unshaded, cull_disabled;
+render_mode unshaded, cull_disabled, blend_mix, depth_prepass_alpha;
 
 uniform float progress_distance = 0.0;
 uniform float lap_length = 1.0;
@@ -395,15 +395,15 @@ void fragment() {
 	float yellow_factor = smoothstep(target_speed - 10.0, target_speed - 2.0, speed_kmh)
 		* (1.0 - smoothstep(target_speed + 2.0, target_speed + 10.0, speed_kmh));
 	float red_factor = smoothstep(target_speed + 2.0, target_speed + 10.0, speed_kmh);
-	vec3 green = vec3(0.16, 0.72, 0.34);
-	vec3 yellow = vec3(0.94, 0.72, 0.18);
-	vec3 red = vec3(0.86, 0.12, 0.12);
+	vec3 green = vec3(0.18, 0.82, 0.38);
+	vec3 yellow = vec3(1.0, 0.78, 0.16);
+	vec3 red = vec3(1.0, 0.035, 0.025);
 	vec3 line_color = mix(green, yellow, yellow_factor);
 	line_color = mix(line_color, red, red_factor);
 	if (ahead > lookahead_m) {
 		line_color = green;
 	}
-	ALBEDO = line_color;
+	ALBEDO = line_color;\n\tALPHA = 0.62;\n\tEMISSION = line_color * (red_factor * 0.42 + yellow_factor * 0.08);
 }
 """
 	_racing_line_material = ShaderMaterial.new()
