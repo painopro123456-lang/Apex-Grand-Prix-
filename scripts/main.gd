@@ -33,6 +33,7 @@ var start_lights: Array[ColorRect] = []
 var countdown_step: int = -1
 var countdown_timer: float = 0.0
 var lights_out_delay: float = 0.0
+var lights_out_display_timer: float = 0.0
 var race_started: bool = false
 var race_finished: bool = false
 var result_layer: CanvasLayer
@@ -322,8 +323,8 @@ func _build_hud() -> void:
 	countdown_label.anchor_right = 0.5
 	countdown_label.anchor_top = 0.34
 	countdown_label.anchor_bottom = 0.34
-	countdown_label.position = Vector2(-100, 0)
-	countdown_label.size = Vector2(200, 100)
+	countdown_label.position = Vector2(-260, 0)
+	countdown_label.size = Vector2(520, 100)
 	countdown_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	countdown_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.4, 0.9, 0.65))
 	countdown_label.add_theme_constant_override("shadow_offset_y", 3)
@@ -371,8 +372,13 @@ func _begin_start_sequence() -> void:
 	for light in start_lights:
 		light.color = Color(0.12, 0.025, 0.035)
 
-func _update_start_sequence(delta: float) -> void:
-	if race_started or countdown_step < 0:
+	if race_started:
+		if lights_out_display_timer > 0.0:
+			lights_out_display_timer -= delta
+			if lights_out_display_timer <= 0.0:
+				countdown_label.text = ""
+		return
+	if countdown_step < 0:
 		return
 	countdown_timer += delta
 	if countdown_step < 5:
@@ -389,6 +395,7 @@ func _update_start_sequence(delta: float) -> void:
 	for light in start_lights:
 		light.color = Color(0.12, 0.025, 0.035)
 	countdown_label.text = "LIGHTS OUT"
+	lights_out_display_timer = 1.2
 	status_label.text = "RACE SESSION  •  LIGHTS OUT"
 	race_started = true
 	race_time = 0.0
@@ -973,6 +980,7 @@ func _return_to_main_menu() -> void:
 	for light in start_lights:
 		light.color = Color(0.12, 0.025, 0.035)
 	countdown_label.text = ""
+	lights_out_display_timer = 0.0
 
 func _restart_race() -> void:
 	_return_to_main_menu()
