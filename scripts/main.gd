@@ -38,6 +38,8 @@ var driver_picker: OptionButton
 var team_title_label: Label
 var team_chassis_label: Label
 var team_accent: ColorRect
+var garage_car_name_label: Label
+var race_driver_label: Label
 var team_data: Array[Dictionary] = [
 	{"name":"McLaren","full":"McLAREN MASTERCARD FORMULA 1 TEAM","chassis":"MCL40  /  2026 CHALLENGER","engine":"Mercedes","color":Color("#ff8700"),"drivers":[{"name":"Lando Norris","number":"1"},{"name":"Oscar Piastri","number":"81"}]},
 	{"name":"Mercedes","full":"MERCEDES-AMG PETRONAS FORMULA ONE TEAM","chassis":"W17  /  2026 CHALLENGER","engine":"Mercedes","color":Color("#00a19c"),"drivers":[{"name":"George Russell","number":"63"},{"name":"Kimi Antonelli","number":"12"}]},
@@ -539,9 +541,9 @@ func _build_garage_page() -> void:
 	var car_bay := _panel(garage, Vector2(52, 315), Vector2(690, 325))
 	var bay_kicker := _label(car_bay, "CHASSIS PRESENTATION     /     FACTORY BAY 01", 10, Color(0.65, 0.72, 0.8))
 	bay_kicker.position = Vector2(24, 22)
-	var car_name := _label(car_bay, "APEX GP-01", 31, Color.WHITE)
-	car_name.position = Vector2(24, 74)
-	var car_type := _label(car_bay, "2026 HYBRID GRAND PRIX CHASSIS", 10, Color(0.58, 0.68, 0.79))
+	garage_car_name_label = _label(car_bay, "MCLAREN  /  MCL40", 31, Color.WHITE)
+	garage_car_name_label.position = Vector2(24, 74)
+	var car_type := _label(car_bay, "2026 FORMULA 1 CONSTRUCTOR ENTRY", 10, Color(0.58, 0.68, 0.79))
 	car_type.position = Vector2(27, 120)
 	var bay_line := ColorRect.new()
 	bay_line.position = Vector2(25, 170)
@@ -617,6 +619,10 @@ func _update_garage_selection() -> void:
 		team_chassis_label.text = team["chassis"]
 	if team_accent != null:
 		team_accent.color = team["color"]
+	if garage_car_name_label != null:
+		garage_car_name_label.text = "%s  /  %s" % [team["name"].to_upper(), team["chassis"].split("  /")[0]]
+	if race_driver_label != null:
+		race_driver_label.text = "%s  /  #%s %s" % [team["name"].to_upper(), driver["number"], driver["name"].to_upper()]
 	if garage_status != null:
 		garage_status.text = "POWER UNIT  /  %s" % team["engine"].to_upper()
 
