@@ -32,7 +32,7 @@ func _run_gameplay_smoke() -> void:
 		quit(1)
 		return
 	var circuit_picker := game.get("track_picker") as OptionButton
-	var circuit := game.get("current_track") as RealCircuit
+	var circuit = game.get("current_track")
 	if circuit_picker == null or circuit == null or circuit_picker.item_count != 11:
 		push_error("Gameplay smoke test: expected eleven selectable real-world circuits.")
 		quit(1)
@@ -42,7 +42,7 @@ func _run_gameplay_smoke() -> void:
 		quit(1)
 		return
 	game.call("_on_track_selected", 3)
-	circuit = game.get("current_track") as RealCircuit
+	circuit = game.get("current_track")
 	if circuit.circuit_id != "Monza" or circuit.lap_length_m < 4000.0:
 		push_error("Gameplay smoke test: circuit selection did not load Monza geometry.")
 		quit(1)
