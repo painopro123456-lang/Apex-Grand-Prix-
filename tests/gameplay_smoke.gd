@@ -31,6 +31,22 @@ func _run_gameplay_smoke() -> void:
 		push_error("Gameplay smoke test: expected 11 teams and 2 drivers in the selected team.")
 		quit(1)
 		return
+	var circuit_picker := game.get("track_picker") as OptionButton
+	var circuit := game.get("current_track") as RealCircuit
+	if circuit_picker == null or circuit == null or circuit_picker.item_count != 9:
+		push_error("Gameplay smoke test: expected nine selectable real-world circuits.")
+		quit(1)
+		return
+	if circuit.lap_length_m < 1000.0 or circuit.points.size() < 20:
+		push_error("Gameplay smoke test: selected circuit geometry is incomplete.")
+		quit(1)
+		return
+	game.call("_on_track_selected", 3)
+	circuit = game.get("current_track") as RealCircuit
+	if circuit.circuit_id != "Monza" or circuit.lap_length_m < 4000.0:
+		push_error("Gameplay smoke test: circuit selection did not load Monza geometry.")
+		quit(1)
+		return
 	game.call("_show_frontend_page", "garage")
 	if not bool(frontend.get_node("GaragePage").visible):
 		push_error("Gameplay smoke test: garage page did not open.")
@@ -93,8 +109,12 @@ func _run_gameplay_smoke() -> void:
 
 	game.set("lap_number", 1)
 	game.set("lap_time", 62.5)
-	game.set("last_car_position", Vector3(105.0, car.global_position.y, -1.0))
-	car.global_position = Vector3(105.0, car.global_position.y, 1.0)
+	var gate_point: Vector2 = circuit.points[0]
+	var gate_tangent := (circuit.points[1] - circuit.points[0]).normalized()
+	var before_gate := gate_point - gate_tangent * 2.0
+	var after_gate := gate_point + gate_tangent * 2.0
+	game.set("last_car_position", Vector3(before_gate.x, car.global_position.y, before_gate.y))
+	car.global_position = Vector3(after_gate.x, car.global_position.y, after_gate.y)
 	game.call("_update_lap_detection", 1.0 / 60.0)
 	if int(game.get("lap_number")) != 2:
 		push_error("Gameplay smoke test: start/finish crossing did not increment the lap.")
@@ -105,11 +125,11 @@ func _run_gameplay_smoke() -> void:
 		quit(1)
 		return
 
-	car.reset_vehicle(Vector3(105.0, 1.0, -8.0), PI)
+	car.reset_vehicle(circuit.start_position, circuit.start_heading)
 	if car.speed_kmh > 0.1 or car.crash_damage > 0.0 or car.retired:
 		push_error("Gameplay smoke test: vehicle reset did not restore the car state.")
 		quit(1)
 		return
 
-	print("GAMEPLAY SMOKE PASS: front end, garage/settings navigation, roster, five-light start, acceleration (%.1f km/h), DRS, ERS, tyre wear, braking, lap/best-lap gate and reset." % acceleration_speed)
+	print("GAMEPLAY SMOKE PASS: front end, garage/settings navigation, roster, nine real circuit geometries and selection, five-light start, acceleration (%.1f km/h), DRS, ERS, tyre wear, braking, lap/best-lap gate and reset." % acceleration_speed)
 	quit(0)
