@@ -318,7 +318,7 @@ func _begin_start_sequence() -> void:
 	countdown_label.text = "READY"
 
 func _update_start_sequence(delta: float) -> void:
-	if race_started:
+	if race_started or countdown_step < 0:
 		return
 	countdown_timer += delta
 	if countdown_timer < 1.0:
