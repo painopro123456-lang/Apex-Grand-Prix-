@@ -12,6 +12,7 @@ var start_heading: float = 0.0
 func _ready() -> void:
 	_build_ground()
 	_build_road()
+	_build_gravel_traps()
 	_build_track_markings()
 	_build_curbs()
 	_build_barriers()
@@ -114,6 +115,73 @@ void fragment() {
 		road_body.add_child(strip)
 	add_child(road_body)
 
+
+
+func get_lateral_track_distance(world_position: Vector3) -> float:
+	var best_distance := INF
+	var best_offset := 0.0
+	for i in range(segments):
+		var center := _center_at(float(i) / float(segments))
+		var distance := Vector2(world_position.x - center.x, world_position.z - center.z).length_squared()
+		if distance < best_distance:
+			best_distance = distance
+			var side := _side_at(float(i) / float(segments))
+			best_offset = Vector2(world_position.x - center.x, world_position.z - center.z).dot(Vector2(side.x, side.z))
+	return absf(best_offset)
+
+func is_on_gravel(world_position: Vector3) -> bool:
+	var lateral_distance := get_lateral_track_distance(world_position)
+	return lateral_distance > road_width * 0.5 + 1.0 and lateral_distance < road_width * 0.5 + 15.0
+
+func _build_gravel_traps() -> void:
+	var vertices := PackedVector3Array()
+	var indices := PackedInt32Array()
+	var inner_edge := road_width * 0.5 + 0.9
+	var outer_edge := road_width * 0.5 + 15.0
+	for i in range(segments + 1):
+		var t := float(i) / float(segments)
+		var center := _center_at(t)
+		var side := _side_at(t)
+		for side_sign in [-1.0, 1.0]:
+			vertices.append(center + side * inner_edge * side_sign + Vector3.UP * -0.035)
+			vertices.append(center + side * outer_edge * side_sign + Vector3.UP * -0.035)
+		if i < segments:
+			var base := i * 4
+			indices.append_array(PackedInt32Array([base, base + 4, base + 1, base + 1, base + 4, base + 5]))
+			indices.append_array(PackedInt32Array([base + 2, base + 3, base + 6, base + 3, base + 7, base + 6]))
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_INDEX] = indices
+	var gravel_mesh := ArrayMesh.new()
+	gravel_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	var gravel := MeshInstance3D.new()
+	gravel.name = "GravelTraps"
+	gravel.mesh = gravel_mesh
+	var material := ShaderMaterial.new()
+	var shader := Shader.new()
+	shader.code = """
+shader_type spatial;
+render_mode unshaded;
+varying vec3 gravel_world_position;
+void vertex() {
+    gravel_world_position = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+}
+float hash21(vec2 p) {
+    p = fract(p * vec2(127.1, 311.7));
+    p += dot(p, p + 17.17);
+    return fract(p.x * p.y);
+}
+void fragment() {
+    vec2 cell = floor(gravel_world_position.xz * 7.0);
+    float grain = hash21(cell) * 0.22;
+    float variation = hash21(cell * 0.31) * 0.12;
+    ALBEDO = vec3(0.31, 0.255, 0.17) + grain + variation;
+}
+"""
+	material.shader = shader
+	gravel.material_override = material
+	add_child(gravel)
 
 func _build_curbs() -> void:
 	var curb_mesh := BoxMesh.new()
