@@ -63,7 +63,8 @@ func _calculate_track_metrics() -> void:
 	road_width_average = (road_width_average - 13.0) / float(points.size())
 	var first_tangent := (points[1] - points[0]).normalized()
 	start_heading = atan2(-first_tangent.x, -first_tangent.y)
-	start_position = Vector3(points[0].x - first_tangent.x * 5.0, 1.0, points[0].y - first_tangent.y * 5.0)
+	var grid_offset := _normal_at(0) * 3.0 - first_tangent * 7.0
+	start_position = Vector3(points[0].x + grid_offset.x, 1.0, points[0].y + grid_offset.y)
 
 func _normal_at(index: int) -> Vector2:
 	var before := points[(index - 1 + points.size()) % points.size()]
@@ -154,7 +155,7 @@ func _build_kerbs() -> void:
 		var yaw := atan2(tangent.x, tangent.y)
 		var normal := _normal_at(i)
 		for side in [-1.0, 1.0]:
-			var edge: Vector2 = points[i] + normal * (left_widths[i] if side > 0.0 else -right_widths[i]) * side
+			var edge: Vector2 = points[i] + normal * (left_widths[i] if side > 0.0 else -right_widths[i])
 			var pos := Vector3(edge.x, 0.11, edge.y)
 			multi.set_instance_transform(index, Transform3D(Basis(Vector3.UP, yaw), pos))
 			multi.set_instance_color(index, Color("#d71920") if (i / 2) % 2 == 0 else Color("#eeeeea"))
