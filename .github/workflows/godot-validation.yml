@@ -77,3 +77,19 @@ jobs:
             exit 1
           fi
           grep -q "GAMEPLAY SMOKE PASS" /tmp/godot-gameplay.log
+
+      - name: Capture real gameplay screenshot
+        shell: bash
+        run: |
+          set -o pipefail
+          xvfb-run -a env LIBGL_ALWAYS_SOFTWARE=1 godot --rendering-method gl_compatibility --rendering-driver opengl3 --audio-driver Dummy --path . --script res://tests/capture_gameplay.gd 2>&1 | tee /tmp/godot-screenshot.log
+          test -s /tmp/apex-gameplay.png
+          grep -q "GAMEPLAY SCREENSHOT SAVED" /tmp/godot-screenshot.log
+
+      - name: Upload gameplay screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: Apex-Grand-Prix-Gameplay-Screenshot
+          path: /tmp/apex-gameplay.png
+          if-no-files-found: error
+          retention-days: 14
