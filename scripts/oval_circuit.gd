@@ -96,10 +96,22 @@ void fragment() {
 	road.material_override = asphalt
 	add_child(road)
 
+	# Use overlapping oriented box strips for a stable drivable collision surface.
+	# The rendered road remains a smooth mesh; physics does not depend on a thin triangle shell.
 	var road_body := StaticBody3D.new()
-	var road_collision := CollisionShape3D.new()
-	road_collision.shape = mesh.create_trimesh_shape()
-	road_body.add_child(road_collision)
+	road_body.name = "RoadCollision"
+	for i in range(segments):
+		var t0 := float(i) / float(segments)
+		var t1 := float(i + 1) / float(segments)
+		var center := _center_at((t0 + t1) * 0.5)
+		var tangent := (_center_at(t1) - _center_at(t0)).normalized()
+		var strip := CollisionShape3D.new()
+		var strip_shape := BoxShape3D.new()
+		strip_shape.size = Vector3(road_width, 0.5, center.distance_to(_center_at(t1)) + 0.55)
+		strip.shape = strip_shape
+		strip.position = center + Vector3.UP * -0.23
+		strip.rotation.y = atan2(tangent.x, tangent.z)
+		road_body.add_child(strip)
 	add_child(road_body)
 
 
