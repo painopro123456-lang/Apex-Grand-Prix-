@@ -1,32 +1,44 @@
 # Apex Grand Prix
 
-A private-development racing simulator targeting a high-fidelity Formula racing experience.
+An independent, private-development open-wheel racing simulator prototype. The goal is a deep, authentic Grand Prix experience with scalable visuals and a serious driving model.
 
-## Current foundation
-- Godot 4 project using the Compatibility renderer for a broad range of integrated GPUs.
-- Custom vehicle dynamics prototype with throttle, brake, steering, drag, grip and speed-sensitive steering.
-- Procedural test circuit with a closed road surface, track edge barriers and start/finish markings.
-- Race-start sequence with five red lights, lights out, a basic race clock and a compact HUD.
+## Current playable foundation
+- Godot 4 project using the Compatibility renderer.
+- Procedural closed test circuit with asphalt, collision, barriers, start/finish line, grid boxes and alternating red/white kerbs.
+- Vehicle controller with speed-sensitive steering, automatic 8-speed gearbox, aerodynamic drag/downforce grip, DRS, ERS deployment/recharge, tyre temperature and tyre wear.
+- Five-red-light start sequence and race HUD with speed, lap-session clock and vehicle telemetry.
 
-This is an early playable foundation, not a finished F1 recreation. High-quality licensed/commissioned car and circuit assets, detailed environments, audio, AI, pit systems and full race-weekend features are still required.
+This is still an early prototype. It does not yet contain production-quality F1 car models, real-world circuit recreations, race AI, pit stops, full damage simulation, career mode, licensed audio, or a Windows release.
 
 ## Requirements
-- Godot 4.3 or newer (4.x recommended).
-- Keyboard: W/Up throttle, S/Down brake, A/D or Left/Right steering, Space handbrake, R reset.
+- Godot 4.3 or newer (Godot 4.x recommended).
+- Keyboard controls:
+  - W / Up: throttle
+  - S / Down: brake / reverse
+  - A / D or Left / Right: steering
+  - E: deploy ERS
+  - F: DRS (prototype toggle; no detection-zone rules yet)
+  - Space: handbrake
+  - R: reset car
 
 ## Run
-1. Open this folder in Godot 4.
-2. Open `scenes/main.tscn`.
-3. Press F6/F5 to run.
+1. Install Godot 4.
+2. Clone or download this repository.
+3. Open the repository folder in Godot.
+4. Run `scenes/main.tscn` (F6) or the project (F5).
 
 ## Performance direction
-The initial project uses Godot's Compatibility renderer. Visual quality settings will be scalable; the project should not assume a dedicated GPU or large memory budget.
+The project starts on Godot's Compatibility renderer to support a wider range of integrated GPUs. Future quality settings should scale shadows, reflections, crowd density, trackside detail and render resolution independently. The 4 GB RAM / integrated graphics target remains a performance goal, not a verified benchmark yet.
 
-## Project structure
-- `scenes/main.tscn` — entry scene
-- `scripts/main.gd` — world, camera and race HUD orchestration
-- `scripts/f1_car.gd` — first-pass vehicle controller
+## Structure
+- `project.godot` — engine and renderer configuration
+- `scenes/main.tscn` — game entry scene
+- `scripts/main.gd` — environment, camera, HUD and start sequence
+- `scripts/f1_car.gd` — vehicle dynamics and energy/tyre systems
 - `scripts/oval_circuit.gd` — procedural test circuit
 
-## Important
-This project is an independent fan-made simulator prototype. It is not affiliated with Formula One, the FIA, or any racing team. Names, logos, likenesses, and proprietary game assets must only be added where their use is authorized.
+## Project status
+See [ROADMAP.md](docs/ROADMAP.md) for planned systems and current priorities.
+
+## Legal
+Independent fan-made prototype; not affiliated with Formula One, the FIA, or any racing team. Trademarks, likenesses, circuit designs, and proprietary assets require appropriate authorization. Use original or properly licensed models, textures, sounds, and data.
