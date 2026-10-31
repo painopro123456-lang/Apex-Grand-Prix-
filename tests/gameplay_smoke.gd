@@ -47,9 +47,17 @@ func _run_gameplay_smoke() -> void:
 		push_error("Gameplay smoke test: circuit selection did not load Monza geometry.")
 		quit(1)
 		return
-	var racing_line := circuit.get_node_or_null("RacingLineGuide") as MultiMeshInstance3D
-	if racing_line == null or racing_line.multimesh == null or circuit.get("_racing_path").size() != circuit.points.size() or circuit.get("_racing_target_speeds").size() != circuit.points.size():
-		push_error("Gameplay smoke test: racing line mesh was not generated.")
+	var racing_line := circuit.get_node_or_null("RacingLineGuide") as MeshInstance3D
+	var racing_mesh := racing_line.mesh as ArrayMesh if racing_line != null else null
+	var racing_material := racing_line.material_override as ShaderMaterial if racing_line != null else null
+	if racing_line == null or racing_mesh == null or racing_mesh.get_surface_count() != 1 or racing_material == null or circuit.get("_racing_path").size() != circuit.points.size() or circuit.get("_racing_target_speeds").size() != circuit.points.size():
+		push_error("Gameplay smoke test: smooth racing-line ribbon mesh was not generated.")
+		quit(1)
+		return
+	var ribbon_arrays := racing_mesh.surface_get_arrays(0)
+	var ribbon_vertices: PackedVector3Array = ribbon_arrays[Mesh.ARRAY_VERTEX]
+	if ribbon_vertices.size() != (circuit.get("_racing_path").size() + 1) * 2:
+		push_error("Gameplay smoke test: racing line is not one continuous ribbon with a closed start/finish seam.")
 		quit(1)
 		return
 	circuit.set_racing_line_visible(false)
@@ -70,14 +78,13 @@ func _run_gameplay_smoke() -> void:
 	var probe_index := int(probe_progress.x)
 	var probe_target := racing_targets[probe_index]
 	circuit.update_racing_line_feedback(probe_position, probe_target + 100.0)
-	var racing_colors: MultiMesh = racing_line.multimesh
-	if circuit.call("_get_racing_line_color_state", probe_index, probe_progress.y, probe_target + 100.0) != 2 or racing_colors.get_instance_color(probe_index) != Color("#ff3939"):
-		push_error("Gameplay smoke test: racing line did not turn red in the car's projected segment when speed exceeded its local target.")
+	if circuit.call("_get_racing_line_color_state", probe_index, probe_progress.y, probe_target + 100.0) != 2 or not is_equal_approx(float(racing_material.get_shader_parameter("speed_kmh")), probe_target + 100.0):
+		push_error("Gameplay smoke test: smooth racing line did not receive red/braking speed feedback.")
 		quit(1)
 		return
 	circuit.update_racing_line_feedback(probe_position, 0.0)
-	if circuit.call("_get_racing_line_color_state", probe_index, probe_progress.y, 0.0) != 0 or racing_colors.get_instance_color(probe_index) != Color("#42e58b"):
-		push_error("Gameplay smoke test: racing line did not return to green after slowing below the local target speed.")
+	if circuit.call("_get_racing_line_color_state", probe_index, probe_progress.y, 0.0) != 0 or not is_equal_approx(float(racing_material.get_shader_parameter("speed_kmh")), 0.0):
+		push_error("Gameplay smoke test: smooth racing line did not return to green/accelerate feedback after slowing.")
 		quit(1)
 		return
 	var distant_index := -1
@@ -86,7 +93,7 @@ func _run_gameplay_smoke() -> void:
 		if cumulative[i] > 300.0:
 			distant_index = i
 			break
-	if distant_index >= 0 and racing_colors.get_instance_color(distant_index) != Color("#42e58b"):
+	if distant_index >= 0 and circuit.call("_get_racing_line_color_state", distant_index, probe_progress.y, probe_target + 100.0) != 0:
 		push_error("Gameplay smoke test: speed feedback incorrectly recoloured the distant racing line.")
 		quit(1)
 		return
