@@ -27,6 +27,9 @@ class_name F1CarController
 @export var target_tyre_temp: float = 92.0
 
 var speed_kmh: float = 0.0
+var crash_damage: float = 0.0
+var retired: bool = false
+var impact_cooldown: float = 0.0
 var throttle_input: float = 0.0
 var brake_input: float = 0.0
 var steer_input: float = 0.0
@@ -52,11 +55,17 @@ func _ready() -> void:
 	_heading = rotation.y
 
 func _physics_process(delta: float) -> void:
+	if retired:
+		velocity = Vector3.ZERO
+		return
+	impact_cooldown = maxf(0.0, impact_cooldown - delta)
 	_read_controls()
 	_update_power_unit(delta)
 	_update_steering(delta)
 	_update_vehicle_dynamics(delta)
+	var impact_velocity := velocity
 	move_and_slide()
+	_process_impact_collisions(impact_velocity)
 	speed_kmh = absf(_longitudinal_speed) * 3.6
 	_update_tyre_model(delta)
 
@@ -132,6 +141,32 @@ func _update_vehicle_dynamics(delta: float) -> void:
 	velocity = desired_forward + lateral_velocity
 	velocity.y = -1.0
 
+func _process_impact_collisions(incoming_velocity: Vector3) -> void:
+	if impact_cooldown > 0.0:
+		return
+	for index in range(get_slide_collision_count()):
+		var collision := get_slide_collision(index)
+		var normal := collision.get_normal()
+		var horizontal_normal := Vector3(normal.x, 0.0, normal.z).normalized()
+		if horizontal_normal.length_squared() < 0.5:
+			continue
+		var impact_speed := absf(incoming_velocity.dot(horizontal_normal))
+		if impact_speed < 7.0:
+			continue
+		impact_cooldown = 0.55
+		crash_damage = clampf(crash_damage + (impact_speed - 6.0) * 1.35, 0.0, 100.0)
+		var severity := clampf((impact_speed - 7.0) / 28.0, 0.0, 0.9)
+		_longitudinal_speed *= 1.0 - severity
+		velocity = velocity.slide(horizontal_normal) * (1.0 - severity * 0.55)
+		var contact_side := signf(global_transform.basis.x.dot(horizontal_normal))
+		_heading += contact_side * minf(impact_speed * 0.006, 0.24)
+		rotation.y = _heading
+		if crash_damage >= 100.0:
+			retired = true
+			_longitudinal_speed = 0.0
+			velocity = Vector3.ZERO
+		break
+
 func _update_tyre_model(delta: float) -> void:
 	var slip_heat := absf(steer_input) * absf(_longitudinal_speed) * 0.018
 	var brake_heat := brake_input * 7.0
@@ -149,3 +184,6 @@ func reset_vehicle(at_position: Vector3, heading: float = 0.0) -> void:
 	velocity = Vector3.ZERO
 	current_gear = 1
 	engine_rpm = 4200.0
+	crash_damage = 0.0
+	retired = false
+	impact_cooldown = 0.0
