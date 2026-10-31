@@ -14,7 +14,10 @@ var points: PackedVector2Array = PackedVector2Array()
 var left_widths: PackedFloat32Array = PackedFloat32Array()
 var right_widths: PackedFloat32Array = PackedFloat32Array()
 var road_width_average: float = 13.0
-var _racing_line: MeshInstance3D
+var _racing_line: MultiMeshInstance3D
+var _racing_multimesh: MultiMesh
+var _racing_path: PackedVector2Array = PackedVector2Array()
+var _racing_target_speeds: PackedFloat32Array = PackedFloat32Array()
 
 func _ready() -> void:
 	_load_geometry()
@@ -234,56 +237,136 @@ func _build_grid_boxes() -> void:
 		add_child(mark)
 
 
+func _racing_point(index: int, offset: float, offsets: PackedFloat32Array) -> Vector2:
+	var normal := _normal_at(index)
+	return points[index] + normal * offset
+
+func _racing_local_cost(index: int, candidate_offset: float, offsets: PackedFloat32Array) -> float:
+	var count := points.size()
+	var previous_index := (index - 1 + count) % count
+	var next_index := (index + 1) % count
+	var previous := _racing_point(previous_index, offsets[previous_index], offsets)
+	var current := _racing_point(index, candidate_offset, offsets)
+	var next := _racing_point(next_index, offsets[next_index], offsets)
+	var incoming := current - previous
+	var outgoing := next - current
+	var first_length := maxf(incoming.length(), 0.05)
+	var second_length := maxf(outgoing.length(), 0.05)
+	var chord_length := maxf((next - previous).length(), 0.05)
+	var cross_value := absf(incoming.x * outgoing.y - incoming.y * outgoing.x)
+	var curvature := 2.0 * cross_value / (first_length * second_length * chord_length)
+	# Minimise distance while strongly discouraging sharp curvature. This
+	# encourages a late-apex, wide-entry/wide-exit path instead of the centreline.
+	return first_length + second_length + curvature * curvature * 110.0 * (first_length + second_length) * 0.5
+
+func _calculate_fastest_racing_path() -> void:
+	var count := points.size()
+	_racing_path.clear()
+	_racing_target_speeds.clear()
+	var offsets := PackedFloat32Array()
+	offsets.resize(count)
+	for i in range(count):
+		offsets[i] = 0.0
+
+	# Cyclic coordinate descent: each point is moved across the usable track
+	# width to reduce total path length and cornering curvature.
+	for iteration in range(9):
+		for i in range(count):
+			var min_offset := -right_widths[i] + 1.7
+			var max_offset := left_widths[i] - 1.7
+			if min_offset > max_offset:
+				min_offset = 0.0
+				max_offset = 0.0
+			var best_offset := offsets[i]
+			var best_cost := _racing_local_cost(i, best_offset, offsets)
+			for sample in range(9):
+				var candidate := lerpf(min_offset, max_offset, float(sample) / 8.0)
+				var cost := _racing_local_cost(i, candidate, offsets)
+				if cost < best_cost:
+					best_cost = cost
+					best_offset = candidate
+			offsets[i] = best_offset
+
+	for i in range(count):
+		_racing_path.append(_racing_point(i, offsets[i], offsets))
+
+	# Estimate corner speed from lateral grip, then propagate acceleration and
+	# braking limits around the complete lap to create a usable speed profile.
+	var segment_lengths := PackedFloat32Array()
+	segment_lengths.resize(count)
+	for i in range(count):
+		segment_lengths[i] = maxf(_racing_path[i].distance_to(_racing_path[(i + 1) % count]), 0.1)
+	for i in range(count):
+		var previous := _racing_path[(i - 1 + count) % count]
+		var current := _racing_path[i]
+		var next := _racing_path[(i + 1) % count]
+		var incoming := current - previous
+		var outgoing := next - current
+		var a := maxf(incoming.length(), 0.05)
+		var b := maxf(outgoing.length(), 0.05)
+		var chord := maxf((next - previous).length(), 0.05)
+		var curvature := 2.0 * absf(incoming.x * outgoing.y - incoming.y * outgoing.x) / (a * b * chord)
+		var target_mps := sqrt(12.5 / maxf(curvature, 0.00012))
+		_racing_target_speeds.append(clampf(target_mps * 3.6, 42.0, 330.0))
+	for pass_index in range(3):
+		for step in range(count * 2):
+			var i := step % count
+			var previous_index := (i - 1 + count) % count
+			var reachable := sqrt(pow(_racing_target_speeds[previous_index] / 3.6, 2.0) + 5.5 * segment_lengths[previous_index]) * 3.6
+			_racing_target_speeds[i] = minf(_racing_target_speeds[i], reachable)
+		for step in range(count * 2):
+			var i := count - 1 - (step % count)
+			var next_index := (i + 1) % count
+			var reachable := sqrt(pow(_racing_target_speeds[next_index] / 3.6, 2.0) + 10.0 * segment_lengths[i]) * 3.6
+			_racing_target_speeds[i] = minf(_racing_target_speeds[i], reachable)
+
 func _build_racing_line() -> void:
-	# Coloured guide ribbon follows each circuit's real centreline.
-	var vertices := PackedVector3Array()
-	var indices := PackedInt32Array()
-	var colors := PackedColorArray()
-	for i in range(points.size()):
-		var previous := points[(i - 1 + points.size()) % points.size()]
-		var current := points[i]
-		var next := points[(i + 1) % points.size()]
-		var incoming := (current - previous).normalized()
-		var outgoing := (next - current).normalized()
-		var cross_value := incoming.x * outgoing.y - incoming.y * outgoing.x
-		var turn_angle := absf(atan2(cross_value, incoming.dot(outgoing)))
-		var segment_length := maxf((current.distance_to(previous) + current.distance_to(next)) * 0.5, 0.5)
-		var curvature := turn_angle / segment_length
-		var line_color := Color("#42e58b")
-		if curvature >= 0.018:
-			line_color = Color("#ff4b43")
-		elif curvature >= 0.008:
-			line_color = Color("#ffd34e")
-		var normal := _normal_at(i)
-		var left := current + normal * 0.42
-		var right := current - normal * 0.42
-		vertices.append(Vector3(left.x, 0.105, left.y))
-		vertices.append(Vector3(right.x, 0.105, right.y))
-		colors.append(line_color)
-		colors.append(line_color)
-		var following := (i + 1) % points.size()
-		var a := i * 2
-		var b := following * 2
-		indices.append_array(PackedInt32Array([a, b, a + 1, a + 1, b, b + 1]))
-	var arrays := []
-	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = vertices
-	arrays[Mesh.ARRAY_COLOR] = colors
-	arrays[Mesh.ARRAY_INDEX] = indices
-	var mesh := ArrayMesh.new()
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	var line := MeshInstance3D.new()
-	line.name = "RacingLineGuide"
-	line.mesh = mesh
+	_calculate_fastest_racing_path()
+	var count := _racing_path.size()
+	if count < 3:
+		return
+	var segment_mesh := BoxMesh.new()
+	segment_mesh.size = Vector3(0.9, 0.075, 1.0)
+	_racing_multimesh = MultiMesh.new()
+	_racing_multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	_racing_multimesh.use_colors = true
+	_racing_multimesh.mesh = segment_mesh
+	_racing_multimesh.instance_count = count
+	for i in range(count):
+		var a := _racing_path[i]
+		var b := _racing_path[(i + 1) % count]
+		var segment := b - a
+		var yaw := atan2(segment.x, segment.y)
+		var transform := Transform3D(Basis(Vector3.UP, yaw), Vector3((a.x + b.x) * 0.5, 0.13, (a.y + b.y) * 0.5))
+		transform = transform.scaled_local(Vector3(1.0, 1.0, maxf(segment.length(), 0.1)))
+		_racing_multimesh.set_instance_transform(i, transform)
+		_racing_multimesh.set_instance_color(i, Color("#42e58b"))
+	_racing_line = MultiMeshInstance3D.new()
+	_racing_line.name = "RacingLineGuide"
+	_racing_line.multimesh = _racing_multimesh
 	var material := StandardMaterial3D.new()
 	material.vertex_color_use_as_albedo = true
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	material.emission_enabled = true
 	material.emission = Color.WHITE
-	material.emission_energy_multiplier = 0.35
-	line.material_override = material
-	add_child(line)
-	_racing_line = line
+	material.emission_energy_multiplier = 0.45
+	_racing_line.material_override = material
+	add_child(_racing_line)
+
+func update_racing_line_feedback(world_position: Vector3, speed_kmh: float) -> void:
+	if _racing_multimesh == null or _racing_path.is_empty():
+		return
+	# Compare the car's live speed with the ideal speed at every point:
+	# green = safely below target, yellow = approaching target, red = too fast.
+	for i in range(_racing_path.size()):
+		var target_speed := _racing_target_speeds[i]
+		var line_color := Color("#42e58b")
+		if speed_kmh > target_speed + 8.0:
+			line_color = Color("#ff3939")
+		elif speed_kmh > target_speed - 8.0:
+			line_color = Color("#ffd34e")
+		_racing_multimesh.set_instance_color(i, line_color)
+
 
 func set_racing_line_visible(enabled: bool) -> void:
 	if is_instance_valid(_racing_line):
