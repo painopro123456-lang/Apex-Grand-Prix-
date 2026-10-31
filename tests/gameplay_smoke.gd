@@ -64,10 +64,12 @@ func _run_gameplay_smoke() -> void:
 		return
 	var acceleration_speed := car.speed_kmh
 
+	Input.action_press("accelerate")
 	Input.action_press("drs")
 	Input.action_press("ers_deploy")
 	for frame in range(30):
 		await physics_frame
+	Input.action_release("accelerate")
 	Input.action_release("drs")
 	Input.action_release("ers_deploy")
 	if not car.drs_active or car.ers_charge >= 100.0:
