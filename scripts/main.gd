@@ -122,11 +122,28 @@ func _build_environment() -> void:
 	sky.sky_material = sky_material
 	environment.sky = sky
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+	environment.ambient_light_energy = 0.72
 	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	environment.tonemap_exposure = 1.0
 	environment.glow_enabled = true
-	environment.glow_intensity = 0.28
-	environment.glow_strength = 0.7
+	environment.glow_intensity = 0.32
+	environment.glow_strength = 0.72
 	environment.glow_bloom = 0.08
+	environment.ssao_enabled = true
+	environment.ssao_radius = 2.2
+	environment.ssao_intensity = 1.4
+	environment.ssao_power = 1.35
+	environment.ssil_enabled = true
+	environment.ssil_radius = 5.0
+	environment.ssil_intensity = 0.65
+	environment.ssr_enabled = true
+	environment.ssr_max_steps = 96
+	environment.ssr_fade_in = 0.12
+	environment.ssr_fade_out = 2.0
+	environment.volumetric_fog_enabled = true
+	environment.volumetric_fog_density = 0.006
+	environment.volumetric_fog_albedo = Color(0.66, 0.72, 0.82)
+	environment.volumetric_fog_length = 220.0
 	environment.adjustment_enabled = true
 	environment.adjustment_contrast = 1.08
 	environment.adjustment_saturation = 1.06
@@ -137,8 +154,11 @@ func _build_environment() -> void:
 	sun_light.rotation_degrees = Vector3(-48, -32, 0)
 	sun_light.light_energy = 1.35
 	sun_light.shadow_enabled = true
-	sun_light.directional_shadow_max_distance = 180.0
+	sun_light.directional_shadow_max_distance = 280.0
 	sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	sun_light.shadow_bias = 0.035
+	sun_light.shadow_normal_bias = 1.5
+	sun_light.light_angular_distance = 0.35
 	add_child(sun_light)
 
 func _build_car() -> void:
@@ -630,7 +650,7 @@ func _build_settings_page() -> void:
 	graphics_preset_picker.position = Vector2(24, 47)
 	graphics_preset_picker.size = Vector2(300, 38)
 	graphics_preset_picker.add_theme_font_size_override("font_size", 13)
-	for option in ["LOW", "MEDIUM", "HIGH", "ULTRA"]:
+	for option in ["HIGH", "VERY HIGH", "ULTRA", "CINEMATIC"]:
 		graphics_preset_picker.add_item(option)
 	graphics_preset_picker.item_selected.connect(_on_graphics_preset_selected)
 	panel.add_child(graphics_preset_picker)
@@ -700,18 +720,23 @@ func _apply_graphics_settings() -> void:
 	if world_environment == null or world_environment.environment == null:
 		return
 	var environment := world_environment.environment
-	var preset_shadow_distances := [70.0, 110.0, 180.0, 260.0]
-	var preset_glow := [false, false, true, true]
-	var preset_glow_strength := [0.0, 0.0, 0.55, 0.8]
-	var preset_shadow_enabled := [false, true, true, true]
-	sun_light.shadow_enabled = preset_shadow_enabled[graphics_preset]
+	var preset_shadow_distances := [160.0, 220.0, 300.0, 420.0]
+	var preset_glow_strength := [0.42, 0.58, 0.72, 0.9]
+	var preset_ssil := [false, false, true, true]
+	var preset_ssr := [false, true, true, true]
+	var preset_fog := [false, false, true, true]
+	sun_light.shadow_enabled = true
 	sun_light.directional_shadow_max_distance = preset_shadow_distances[graphics_preset]
-	environment.glow_enabled = preset_glow[graphics_preset]
+	environment.glow_enabled = true
 	environment.glow_strength = preset_glow_strength[graphics_preset]
-	var scale_values := [0.5, 0.75, 1.0, 1.25]
+	environment.ssao_enabled = true
+	environment.ssil_enabled = preset_ssil[graphics_preset]
+	environment.ssr_enabled = preset_ssr[graphics_preset]
+	environment.volumetric_fog_enabled = preset_fog[graphics_preset]
+	var scale_values := [0.75, 1.0, 1.25, 1.5]
 	get_viewport().scaling_3d_scale = scale_values[render_scale_index]
 	if settings_feedback != null:
-		var names := ["LOW", "MEDIUM", "HIGH", "ULTRA"]
+		var names := ["HIGH", "VERY HIGH", "ULTRA", "CINEMATIC"]
 		settings_feedback.text = "APPLIED  /  %s QUALITY  •  %d%% RENDER SCALE" % [names[graphics_preset], int(scale_values[render_scale_index] * 100.0)]
 
 func _save_graphics_settings() -> void:
