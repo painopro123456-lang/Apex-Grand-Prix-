@@ -89,11 +89,12 @@ func _run_gameplay_smoke() -> void:
 		quit(1)
 		return
 
+	game.set("lap_number", 1)
 	game.set("lap_time", 62.5)
 	game.set("last_car_position", Vector3(105.0, car.global_position.y, -1.0))
 	car.global_position = Vector3(105.0, car.global_position.y, 1.0)
 	game.call("_update_lap_detection", 1.0 / 60.0)
-	if int(game.get("lap_number")) != 1:
+	if int(game.get("lap_number")) != 2:
 		push_error("Gameplay smoke test: start/finish crossing did not increment the lap.")
 		quit(1)
 		return
