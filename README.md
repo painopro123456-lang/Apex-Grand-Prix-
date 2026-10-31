@@ -3,7 +3,7 @@
 An independent, private-development open-wheel racing simulator prototype. The goal is a deep, authentic Grand Prix experience with scalable visuals and a serious driving model.
 
 ## Current playable foundation
-- F1-inspired front-end with home, race-weekend, garage and settings navigation.
+- F1-inspired front-end with home, race-weekend, garage and settings navigation.\n- 2026 grid selection in the garage: all 11 teams, their 2026 chassis labels, power-unit suppliers and 22 race drivers. Selected team/driver is reflected in the garage and race HUD.
 - Dark neutral motorsport UI with restrained red accents, layered panels and dedicated garage configuration screen.
 - Godot 4 project using the Compatibility renderer.
 - Procedural closed test circuit with asphalt, collision, barriers, start/finish line, grid boxes and alternating red/white kerbs.
@@ -52,3 +52,4 @@ Independent fan-made prototype; not affiliated with Formula One, the FIA, or any
 The current prototype now includes a procedural asphalt shader with fine surface variation, painted edge lines, filmic tonemapping, restrained glow, improved directional shadow coverage, a corrected grid/start-line layout, a locked five-light grid countdown, and a first start/finish crossing gate with lap and best-lap display. These systems are early implementations and still require in-engine validation.
 
 The project does **not** yet contain a finished high-detail open-wheel vehicle, real-world circuit recreations, AI field, pit stops, wet-weather simulation, damage, or a complete race-weekend flow. Those remain active development targets; no claim of AAA graphics or a verified 4 GB performance result is being made.
+\n\nThe 2026 team and driver roster follows Formula 1's published 2026 grid. Team names, driver names and numbers are factual references; this independent project is not affiliated with Formula 1 or the teams. The current car selection is roster/chassis metadata only—the game still needs original, high-detail 3D car models and team liveries.\n
