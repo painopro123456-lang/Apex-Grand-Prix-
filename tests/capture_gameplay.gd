@@ -26,7 +26,7 @@ func _capture_gameplay() -> void:
 		quit(1)
 		return
 	Input.action_press("accelerate")
-	for frame in range(36):
+	for frame in range(100):
 		await physics_frame
 	Input.action_release("accelerate")
 	for frame in range(8):
