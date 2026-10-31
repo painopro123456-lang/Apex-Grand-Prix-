@@ -74,9 +74,6 @@ The settings page now exposes Low, Medium, High and Ultra presets, 3D render sca
 The test circuit now uses overlapping oriented collision strips under the visible asphalt instead of relying on a thin triangle-mesh road collider. The car records significant horizontal impacts against solid collision bodies, loses speed, can yaw away from the impact, accumulates damage, and retires with a DNF at critical damage. This is a first collision pass—not yet a complete crash simulation. Car-to-car impact testing, wheel/suspension damage, recovery, debris and deformable bodywork remain unfinished. Validate the road seams, barrier response and impact thresholds in Godot before treating this as production-ready.
 
 
-## Gravel traps and tyre contamination prototype
-The oval test circuit now has gravel runoff bands outside both track edges. The car samples its lateral distance from the circuit centreline; driving through the gravel at speed builds a visible gravel-coloured overlay on its four prototype tyre meshes. Once back on asphalt, the gravel overlay gradually fades as the tyres shed the stones. The HUD reports gravel contamination. This prototype still needs in-engine visual and handling tests; realistic individual stone adhesion, tyre pickup by each wheel, and gravel spray are future refinements.
-
 
 ## Verified circuit construction (required standard)
 - [ ] Replace the procedural oval as the player-facing venue; retain it only as a clearly labelled physics test circuit if useful.
@@ -92,3 +89,6 @@ The oval test circuit now has gravel runoff bands outside both track edges. The 
 - FIA circuit maps and event documents: https://www.fia.com/documents/circuit-maps
 - Example official 2026 Melbourne circuit map and circuit data: https://www.fia.com/system/files/decision-document/2026_australian_grand_prix_-_competition_notes_-_circuit_map_pit_lane_drawing_emergency_exits_map_and_quarantine_zone.pdf
 - Unofficial F1 circuit centreline GeoJSON catalogue (MIT-licensed; must be cross-checked against official references): https://github.com/SergioSediq/f1-circuits
+
+## F1 26 scope lock
+The project must stay within the feature and presentation scope of F1 26. Do not add invented game modes, meters, progression systems, assists, simulation features or other mechanics simply because they sound realistic. Before implementing a feature, verify that it exists in F1 26 or is necessary to reproduce an existing F1 26 behaviour. Off-track handling is represented through the car leaving the racing surface and interacting with the actual runoff/gravel; do not expose a gravel-contamination percentage or meter in the HUD. Keep any subtle tyre/gravel visual effect secondary to driving and consistent with the reference game.
