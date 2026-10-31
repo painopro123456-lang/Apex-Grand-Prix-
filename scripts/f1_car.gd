@@ -222,6 +222,7 @@ func reset_vehicle(at_position: Vector3, heading: float = 0.0) -> void:
 	_heading = heading
 	rotation.y = heading
 	_longitudinal_speed = 0.0
+	speed_kmh = 0.0
 	velocity = Vector3.ZERO
 	current_gear = 1
 	engine_rpm = 4200.0
