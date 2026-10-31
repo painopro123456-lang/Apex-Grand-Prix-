@@ -3,6 +3,8 @@
 An independent, private-development open-wheel racing simulator prototype. The goal is a deep, authentic Grand Prix experience with scalable visuals and a serious driving model.
 
 ## Current playable foundation
+- F1-inspired front-end with home, race-weekend, garage and settings navigation.
+- Dark neutral motorsport UI with restrained red accents, layered panels and dedicated garage configuration screen.
 - Godot 4 project using the Compatibility renderer.
 - Procedural closed test circuit with asphalt, collision, barriers, start/finish line, grid boxes and alternating red/white kerbs.
 - Vehicle controller with speed-sensitive steering, automatic 8-speed gearbox, aerodynamic drag/downforce grip, DRS, ERS deployment/recharge, tyre temperature and tyre wear.
@@ -29,6 +31,8 @@ This is still an early prototype. It does not yet contain production-quality F1 
 
 ## Performance direction
 The project starts on Godot's Compatibility renderer to support a wider range of integrated GPUs. Future quality settings should scale shadows, reflections, crowd density, trackside detail and render resolution independently. The 4 GB RAM / integrated graphics target remains a performance goal, not a verified benchmark yet.
+
+The garage currently provides the interface shell and selectable configuration categories. The detailed 3D car presentation and functional aerodynamic/tyre setup controls are still in development; the UI does not pretend those systems are finished.
 
 ## Structure
 - `project.godot` — engine and renderer configuration
