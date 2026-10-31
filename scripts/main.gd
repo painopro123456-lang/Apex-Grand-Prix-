@@ -7,6 +7,7 @@ var car
 var current_track
 var track_picker: OptionButton
 var selected_track_id: String = "Austin"
+var racing_line_enabled: bool = true
 var circuit_catalog: Array[Dictionary] = [
 	{"id":"Austin","name":"Circuit of the Americas","country":"USA"},
 	{"id":"Spielberg","name":"Red Bull Ring","country":"Austria"},
@@ -107,6 +108,12 @@ func _process(delta: float) -> void:
 	_update_hud(delta)
 	_update_start_sequence(delta)
 	_update_lap_detection(delta)
+	if Input.is_action_just_pressed("toggle_racing_line"):
+		racing_line_enabled = not racing_line_enabled
+		if current_track != null:
+			current_track.set_racing_line_visible(racing_line_enabled)
+		if status_label != null:
+			status_label.text = "RACING LINE  /  %s" % ("ON" if racing_line_enabled else "OFF")
 
 func _setup_input() -> void:
 	_add_key_action("accelerate", KEY_W)
@@ -121,6 +128,7 @@ func _setup_input() -> void:
 	_add_key_action("reset_car", KEY_R)
 	_add_key_action("drs", KEY_F)
 	_add_key_action("ers_deploy", KEY_E)
+	_add_key_action("toggle_racing_line", KEY_L)
 
 func _add_key_action(action: String, keycode: Key) -> void:
 	if not InputMap.has_action(action):
@@ -293,7 +301,7 @@ func _build_hud() -> void:
 	speed_label.add_theme_constant_override("shadow_offset_y", 2)
 	var unit := _label(speed_panel, "KM/H", 12, Color(0.36, 0.78, 1.0))
 	unit.position = Vector2(148, 61)
-	var speed_note := _label(speed_panel, "FULL THROTTLE  /  RACE MODE", 8, Color(0.42, 0.52, 0.64))
+	var speed_note := _label(speed_panel, "L  /  RACING LINE ON-OFF", 8, Color(0.42, 0.52, 0.64))
 	speed_note.position = Vector2(18, 98)
 
 	# Telemetry card, lower-right.
