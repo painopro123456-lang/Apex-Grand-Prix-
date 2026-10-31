@@ -56,6 +56,7 @@ func _ready() -> void:
 	floor_max_angle = deg_to_rad(55.0)
 	_heading = rotation.y
 	_build_tyre_visuals()
+	_build_aero_visuals()
 
 func _physics_process(delta: float) -> void:
 	if retired:
@@ -175,38 +176,189 @@ func set_circuit(track_node: Node) -> void:
 	circuit = track_node
 
 func _build_tyre_visuals() -> void:
-	var tyre_material := StandardMaterial3D.new()
-	tyre_material.albedo_color = Color(0.025, 0.027, 0.03)
-	tyre_material.roughness = 0.96
-	var gravel_material := StandardMaterial3D.new()
-	gravel_material.albedo_color = Color(0.42, 0.34, 0.23)
-	gravel_material.roughness = 1.0
+	var rubber := _visual_material(Color("#111316"), 0.02, 0.88)
+	var sidewall := _visual_material(Color("#202327"), 0.0, 0.94)
+	var rim := _visual_material(Color("#aeb7c2"), 0.82, 0.24)
+	var hub := _visual_material(Color("#333c48"), 0.72, 0.3)
 	for x in [-1.02, 1.02]:
 		for z in [-1.48, 1.48]:
-			var tyre := MeshInstance3D.new()
-			var tyre_mesh := TorusMesh.new()
-			tyre_mesh.inner_radius = 0.29
-			tyre_mesh.outer_radius = 0.43
-			tyre_mesh.rings = 16
-			tyre_mesh.ring_segments = 12
-			tyre.mesh = tyre_mesh
-			tyre.material_override = tyre_material
-			tyre.position = Vector3(x, -0.22, z)
-			tyre.rotation.z = PI * 0.5
-			add_child(tyre)
+			var wheel := MeshInstance3D.new()
+			wheel.name = "SlickTyre"
+			var tyre_mesh := CylinderMesh.new()
+			tyre_mesh.top_radius = 0.43
+			tyre_mesh.bottom_radius = 0.43
+			tyre_mesh.height = 0.34
+			tyre_mesh.radial_segments = 40
+			tyre_mesh.rings = 4
+			wheel.mesh = tyre_mesh
+			wheel.material_override = rubber
+			wheel.position = Vector3(x, -0.22, z)
+			wheel.rotation.z = PI * 0.5
+			add_child(wheel)
+
+			var side_ring := MeshInstance3D.new()
+			var ring_mesh := TorusMesh.new()
+			ring_mesh.inner_radius = 0.34
+			ring_mesh.outer_radius = 0.425
+			ring_mesh.rings = 32
+			ring_mesh.ring_segments = 16
+			side_ring.mesh = ring_mesh
+			side_ring.material_override = sidewall
+			side_ring.position = wheel.position
+			side_ring.rotation = wheel.rotation
+			add_child(side_ring)
+
+			var rim_face := MeshInstance3D.new()
+			var rim_mesh := CylinderMesh.new()
+			rim_mesh.top_radius = 0.255
+			rim_mesh.bottom_radius = 0.255
+			rim_mesh.height = 0.355
+			rim_mesh.radial_segments = 32
+			rim_face.mesh = rim_mesh
+			rim_face.material_override = rim
+			rim_face.position = wheel.position
+			rim_face.rotation = wheel.rotation
+			add_child(rim_face)
+
+			var center_cap := MeshInstance3D.new()
+			var cap_mesh := CylinderMesh.new()
+			cap_mesh.top_radius = 0.095
+			cap_mesh.bottom_radius = 0.095
+			cap_mesh.height = 0.37
+			cap_mesh.radial_segments = 24
+			center_cap.mesh = cap_mesh
+			center_cap.material_override = hub
+			center_cap.position = wheel.position
+			center_cap.rotation = wheel.rotation
+			add_child(center_cap)
+
 			var gravel_overlay := MeshInstance3D.new()
 			var overlay_mesh := TorusMesh.new()
 			overlay_mesh.inner_radius = 0.305
 			overlay_mesh.outer_radius = 0.445
-			overlay_mesh.rings = 16
+			overlay_mesh.rings = 24
 			overlay_mesh.ring_segments = 12
 			gravel_overlay.mesh = overlay_mesh
-			gravel_overlay.material_override = gravel_material
-			gravel_overlay.position = tyre.position
-			gravel_overlay.rotation = tyre.rotation
+			gravel_overlay.material_override = _visual_material(Color("#80694a"), 0.0, 1.0)
+			gravel_overlay.position = wheel.position
+			gravel_overlay.rotation = wheel.rotation
 			gravel_overlay.scale = Vector3.ONE * 0.001
 			add_child(gravel_overlay)
 			tyre_gravel_overlays.append(gravel_overlay)
+
+func _visual_material(color: Color, metal: float = 0.0, rough: float = 0.5) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.metallic = metal
+	material.roughness = rough
+	material.clearcoat_enabled = true
+	material.clearcoat = 0.32
+	material.clearcoat_roughness = 0.28
+	return material
+
+func _add_car_box(parent: Node3D, part_name: String, size: Vector3, at: Vector3, material: Material, bevel: float = 0.0) -> MeshInstance3D:
+	var part := MeshInstance3D.new()
+	part.name = part_name
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	mesh.subdivide_width = 2
+	mesh.subdivide_height = 2
+	mesh.subdivide_depth = 2
+	part.mesh = mesh
+	part.material_override = material
+	part.position = at
+	parent.add_child(part)
+	return part
+
+func _add_car_sphere(parent: Node3D, part_name: String, at: Vector3, scale_value: Vector3, material: Material) -> MeshInstance3D:
+	var part := MeshInstance3D.new()
+	part.name = part_name
+	var mesh := SphereMesh.new()
+	mesh.radial_segments = 40
+	mesh.rings = 24
+	part.mesh = mesh
+	part.material_override = material
+	part.position = at
+	part.scale = scale_value
+	parent.add_child(part)
+	return part
+
+func _add_car_beam(parent: Node3D, part_name: String, from: Vector3, to: Vector3, radius: float, material: Material) -> void:
+	var beam := MeshInstance3D.new()
+	beam.name = part_name
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = radius
+	mesh.bottom_radius = radius
+	mesh.height = from.distance_to(to)
+	mesh.radial_segments = 12
+	beam.mesh = mesh
+	beam.material_override = material
+	beam.position = (from + to) * 0.5
+	beam.quaternion = Quaternion(Vector3.UP, (to - from).normalized())
+	parent.add_child(beam)
+
+func _build_aero_visuals() -> void:
+	var carbon := _visual_material(Color("#111820"), 0.58, 0.3)
+	var carbon_edge := _visual_material(Color("#27313c"), 0.72, 0.27)
+	var body_paint := _visual_material(Color("#d9e1eb"), 0.48, 0.23)
+	var accent := _visual_material(Color("#00a7d8"), 0.42, 0.25)
+	var cockpit_black := _visual_material(Color("#080d13"), 0.22, 0.16)
+	var helmet_mat := _visual_material(Color("#e7edf5"), 0.32, 0.22)
+	var suspension := _visual_material(Color("#a8b3c0"), 0.82, 0.25)
+
+	# Sculpted central survival cell and tapered nose cone.
+	_add_car_sphere(self, "CarbonMonocoque", Vector3(0, 0.28, 0.12), Vector3(0.57, 0.43, 1.28), body_paint)
+	var nose := MeshInstance3D.new()
+	nose.name = "TaperedNoseCone"
+	var nose_mesh := CylinderMesh.new()
+	nose_mesh.top_radius = 0.39
+	nose_mesh.bottom_radius = 0.055
+	nose_mesh.height = 2.25
+	nose_mesh.radial_segments = 40
+	nose_mesh.rings = 8
+	nose.mesh = nose_mesh
+	nose.material_override = body_paint
+	nose.position = Vector3(0, 0.24, -1.52)
+	nose.rotation.x = PI * 0.5
+	add_child(nose)
+	_add_car_sphere(self, "NoseTip", Vector3(0, 0.25, -2.62), Vector3(0.09, 0.075, 0.2), accent)
+
+	# Wide sculpted sidepods, cooling inlets and floor edge.
+	for side in [-1.0, 1.0]:
+		_add_car_sphere(self, "Sidepod", Vector3(side * 0.78, 0.12, 0.05), Vector3(0.47, 0.34, 0.92), body_paint)
+		_add_car_box(self, "SidepodInlet", Vector3(0.035, 0.18, 0.48), Vector3(side * 1.17, 0.2, -0.04), carbon)
+		_add_car_box(self, "FloorEdge", Vector3(0.12, 0.09, 2.15), Vector3(side * 0.92, -0.17, 0.35), carbon)
+		_add_car_beam(self, "FrontWishboneUpper", Vector3(side * 0.55, 0.18, -1.35), Vector3(side * 1.0, -0.03, -1.48), 0.035, suspension)
+		_add_car_beam(self, "FrontWishboneLower", Vector3(side * 0.48, -0.08, -1.25), Vector3(side * 1.0, -0.27, -1.48), 0.04, carbon_edge)
+		_add_car_beam(self, "RearWishboneUpper", Vector3(side * 0.52, 0.18, 1.22), Vector3(side * 1.0, -0.03, 1.48), 0.035, suspension)
+		_add_car_beam(self, "RearWishboneLower", Vector3(side * 0.48, -0.08, 1.08), Vector3(side * 1.0, -0.27, 1.48), 0.04, carbon_edge)
+
+	# Front wing: main plane, two flaps and endplates.
+	_add_car_box(self, "FrontWingMainPlane", Vector3(4.35, 0.12, 0.42), Vector3(0, -0.12, -2.72), carbon)
+	_add_car_box(self, "FrontWingFlap", Vector3(4.05, 0.075, 0.2), Vector3(0, 0.0, -2.48), carbon_edge)
+	_add_car_box(self, "FrontWingUpperFlap", Vector3(3.72, 0.055, 0.16), Vector3(0, 0.12, -2.39), accent)
+	for side in [-1.0, 1.0]:
+		_add_car_box(self, "FrontWingEndplate", Vector3(0.075, 0.38, 0.56), Vector3(side * 2.13, 0.02, -2.63), carbon)
+		_add_car_box(self, "FrontWingFootplate", Vector3(0.3, 0.045, 0.62), Vector3(side * 1.88, -0.2, -2.6), carbon_edge)
+
+	# Cockpit tub, halo and driver helmet.
+	_add_car_sphere(self, "CockpitOpening", Vector3(0, 0.64, -0.12), Vector3(0.37, 0.12, 0.59), cockpit_black)
+	_add_car_sphere(self, "DriverHelmet", Vector3(0, 0.78, -0.1), Vector3(0.19, 0.2, 0.2), helmet_mat)
+	_add_car_beam(self, "HaloLeft", Vector3(-0.38, 0.62, 0.22), Vector3(-0.28, 0.92, -0.35), 0.035, carbon_edge)
+	_add_car_beam(self, "HaloRight", Vector3(0.38, 0.62, 0.22), Vector3(0.28, 0.92, -0.35), 0.035, carbon_edge)
+	_add_car_beam(self, "HaloFront", Vector3(-0.28, 0.92, -0.35), Vector3(0.28, 0.92, -0.35), 0.04, carbon_edge)
+	_add_car_beam(self, "HaloSpine", Vector3(0, 0.92, -0.35), Vector3(0, 0.72, 0.35), 0.035, carbon_edge)
+
+	# Engine cover, air intake and high-mounted rear wing.
+	_add_car_sphere(self, "EngineCover", Vector3(0, 0.47, 1.03), Vector3(0.43, 0.48, 0.9), body_paint)
+	_add_car_sphere(self, "AirIntake", Vector3(0, 0.91, 0.52), Vector3(0.23, 0.17, 0.2), carbon)
+	_add_car_box(self, "RearWingMainPlane", Vector3(2.35, 0.11, 0.48), Vector3(0, 1.22, 2.08), carbon)
+	_add_car_box(self, "RearWingUpperFlap", Vector3(2.2, 0.075, 0.22), Vector3(0, 1.4, 2.16), accent)
+	_add_car_box(self, "RearWingEndplateL", Vector3(0.07, 0.52, 0.58), Vector3(-1.13, 1.17, 2.08), carbon)
+	_add_car_box(self, "RearWingEndplateR", Vector3(0.07, 0.52, 0.58), Vector3(1.13, 1.17, 2.08), carbon)
+	_add_car_beam(self, "RearWingSupportL", Vector3(-0.3, 0.58, 1.7), Vector3(-0.3, 1.2, 2.05), 0.045, carbon_edge)
+	_add_car_beam(self, "RearWingSupportR", Vector3(0.3, 0.58, 1.7), Vector3(0.3, 1.2, 2.05), 0.045, carbon_edge)
+	_add_car_box(self, "RearCrashStructure", Vector3(0.22, 0.2, 0.55), Vector3(0, 0.05, 1.95), accent)
 
 func _update_tyre_model(delta: float) -> void:
 	var slip_heat := absf(steer_input) * absf(_longitudinal_speed) * 0.018
