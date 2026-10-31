@@ -30,7 +30,27 @@ var frontend_page_title: Label
 var frontend_page_body: Label
 var garage_status: Label
 var garage_item_label: Label
-var selected_garage_item: String = "APEX GP-01"
+var selected_garage_item: String = "TEAM & DRIVER"
+var selected_team_index: int = 0
+var selected_driver_index: int = 0
+var team_picker: OptionButton
+var driver_picker: OptionButton
+var team_title_label: Label
+var team_chassis_label: Label
+var team_accent: ColorRect
+var team_data: Array[Dictionary] = [
+	{"name":"McLaren","full":"McLAREN MASTERCARD FORMULA 1 TEAM","chassis":"MCL40  /  2026 CHALLENGER","engine":"Mercedes","color":Color("#ff8700"),"drivers":[{"name":"Lando Norris","number":"1"},{"name":"Oscar Piastri","number":"81"}]},
+	{"name":"Mercedes","full":"MERCEDES-AMG PETRONAS FORMULA ONE TEAM","chassis":"W17  /  2026 CHALLENGER","engine":"Mercedes","color":Color("#00a19c"),"drivers":[{"name":"George Russell","number":"63"},{"name":"Kimi Antonelli","number":"12"}]},
+	{"name":"Red Bull Racing","full":"ORACLE RED BULL RACING","chassis":"RB22  /  2026 CHALLENGER","engine":"Red Bull Ford","color":Color("#3671c6"),"drivers":[{"name":"Max Verstappen","number":"3"},{"name":"Isack Hadjar","number":"6"}]},
+	{"name":"Ferrari","full":"SCUDERIA FERRARI HP","chassis":"SF-26  /  2026 CHALLENGER","engine":"Ferrari","color":Color("#e8002d"),"drivers":[{"name":"Charles Leclerc","number":"16"},{"name":"Lewis Hamilton","number":"44"}]},
+	{"name":"Williams","full":"ATLASSIAN WILLIAMS F1 TEAM","chassis":"FW48  /  2026 CHALLENGER","engine":"Mercedes","color":Color("#64c4ff"),"drivers":[{"name":"Carlos Sainz","number":"55"},{"name":"Alexander Albon","number":"23"}]},
+	{"name":"Racing Bulls","full":"VISA CASH APP RACING BULLS","chassis":"VCARB 03  /  2026 CHALLENGER","engine":"Red Bull Ford","color":Color("#6699ff"),"drivers":[{"name":"Liam Lawson","number":"30"},{"name":"Arvid Lindblad","number":"41"}]},
+	{"name":"Aston Martin","full":"ASTON MARTIN ARAMCO FORMULA ONE TEAM","chassis":"AMR26  /  2026 CHALLENGER","engine":"Honda","color":Color("#229971"),"drivers":[{"name":"Fernando Alonso","number":"14"},{"name":"Lance Stroll","number":"18"}]},
+	{"name":"Haas","full":"TGR HAAS F1 TEAM","chassis":"VF-26  /  2026 CHALLENGER","engine":"Ferrari","color":Color("#b6babd"),"drivers":[{"name":"Esteban Ocon","number":"31"},{"name":"Oliver Bearman","number":"87"}]},
+	{"name":"Audi","full":"AUDI REVOLUT F1 TEAM","chassis":"R26  /  2026 CHALLENGER","engine":"Audi","color":Color("#e30613"),"drivers":[{"name":"Nico Hulkenberg","number":"27"},{"name":"Gabriel Bortoleto","number":"5"}]},
+	{"name":"Alpine","full":"BWT ALPINE FORMULA ONE TEAM","chassis":"A526  /  2026 CHALLENGER","engine":"Mercedes","color":Color("#ff87bc"),"drivers":[{"name":"Pierre Gasly","number":"10"},{"name":"Franco Colapinto","number":"43"}]},
+	{"name":"Cadillac","full":"CADILLAC FORMULA 1 TEAM","chassis":"MAC-26  /  2026 CHALLENGER","engine":"Ferrari","color":Color("#d8d8d8"),"drivers":[{"name":"Sergio Perez","number":"11"},{"name":"Valtteri Bottas","number":"77"}]}
+]
 
 func _ready() -> void:
 	_setup_input()
@@ -535,36 +555,70 @@ func _build_garage_page() -> void:
 	bay_desc.size = Vector2(600, 48)
 
 	var setup := _panel(garage, Vector2(772, 315), Vector2(362, 325))
-	var setup_title := _label(setup, "CAR CONFIGURATION", 11, Color(0.67, 0.74, 0.82))
-	setup_title.position = Vector2(22, 22)
-	garage_item_label = _label(setup, selected_garage_item, 23, Color.WHITE)
-	garage_item_label.position = Vector2(22, 58)
-	garage_status = _label(setup, "FACTORY SPECIFICATION", 9, Color(0.58, 0.68, 0.78))
-	garage_status.position = Vector2(24, 94)
-	var setup_rule := ColorRect.new()
-	setup_rule.position = Vector2(22, 126)
-	setup_rule.size = Vector2(318, 1)
-	setup_rule.color = Color(0.23, 0.29, 0.37)
-	setup.add_child(setup_rule)
-	var chassis_button := _frontend_button(setup, "GP-01  /  FACTORY", false)
-	chassis_button.position = Vector2(22, 150)
-	chassis_button.size = Vector2(318, 38)
-	chassis_button.pressed.connect(func(): _select_garage_item("APEX GP-01"))
-	var aero_button := _frontend_button(setup, "AERODYNAMICS  /  SETUP", false)
-	aero_button.position = Vector2(22, 198)
-	aero_button.size = Vector2(318, 38)
-	aero_button.pressed.connect(func(): _select_garage_item("AERODYNAMICS"))
-	var tyre_button := _frontend_button(setup, "TYRES  /  COMPOUND", false)
-	tyre_button.position = Vector2(22, 246)
-	tyre_button.size = Vector2(318, 38)
-	tyre_button.pressed.connect(func(): _select_garage_item("TYRE STRATEGY"))
+	var setup_title := _label(setup, "TEAM & DRIVER SELECTION", 11, Color(0.67, 0.74, 0.82))
+	setup_title.position = Vector2(22, 18)
+	team_picker = OptionButton.new()
+	team_picker.position = Vector2(22, 48)
+	team_picker.size = Vector2(318, 38)
+	team_picker.add_theme_font_size_override("font_size", 13)
+	setup.add_child(team_picker)
+	for team in team_data:
+		team_picker.add_item(team["name"])
+	team_picker.item_selected.connect(_on_team_selected)
+	var driver_caption := _label(setup, "RACE DRIVER", 9, Color(0.58, 0.68, 0.78))
+	driver_caption.position = Vector2(24, 100)
+	driver_picker = OptionButton.new()
+	driver_picker.position = Vector2(22, 120)
+	driver_picker.size = Vector2(318, 38)
+	driver_picker.add_theme_font_size_override("font_size", 13)
+	setup.add_child(driver_picker)
+	driver_picker.item_selected.connect(_on_driver_selected)
+	team_accent = ColorRect.new()
+	team_accent.position = Vector2(22, 174)
+	team_accent.size = Vector2(5, 54)
+	setup.add_child(team_accent)
+	team_title_label = _label(setup, "MCLAREN", 18, Color.WHITE)
+	team_title_label.position = Vector2(38, 174)
+	team_chassis_label = _label(setup, "MCL40  /  2026 CHALLENGER", 9, Color(0.65, 0.72, 0.8))
+	team_chassis_label.position = Vector2(39, 201)
+	garage_status = _label(setup, "POWER UNIT  /  MERCEDES", 9, Color(0.58, 0.68, 0.78))
+	garage_status.position = Vector2(22, 245)
+	_select_team(0)
 
-func _select_garage_item(item: String) -> void:
-	selected_garage_item = item
+func _on_team_selected(index: int) -> void:
+	_select_team(index)
+
+func _on_driver_selected(index: int) -> void:
+	selected_driver_index = index
+	_update_garage_selection()
+
+func _select_team(index: int) -> void:
+	selected_team_index = clampi(index, 0, team_data.size() - 1)
+	selected_driver_index = 0
+	var team: Dictionary = team_data[selected_team_index]
+	if team_picker != null:
+		team_picker.select(selected_team_index)
+	if driver_picker != null:
+		driver_picker.clear()
+		for driver in team["drivers"]:
+			driver_picker.add_item("#%s  %s" % [driver["number"], driver["name"]])
+		driver_picker.select(0)
+	_update_garage_selection()
+
+func _update_garage_selection() -> void:
+	if team_data.is_empty():
+		return
+	var team: Dictionary = team_data[selected_team_index]
+	var drivers: Array = team["drivers"]
+	var driver: Dictionary = drivers[selected_driver_index]
+	if team_title_label != null:
+		team_title_label.text = "%s   /   #%s %s" % [team["name"].to_upper(), driver["number"], driver["name"].to_upper()]
+	if team_chassis_label != null:
+		team_chassis_label.text = team["chassis"]
+	if team_accent != null:
+		team_accent.color = team["color"]
 	if garage_status != null:
-		garage_status.text = "SETUP OPTIONS COMING IN THE VEHICLE SETUP PASS"
-	if garage_item_label != null:
-		garage_item_label.text = item
+		garage_status.text = "POWER UNIT  /  %s" % team["engine"].to_upper()
 
 func _show_frontend_page(page: String) -> void:
 	frontend_page = page
