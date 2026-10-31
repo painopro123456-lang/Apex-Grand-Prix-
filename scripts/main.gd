@@ -40,6 +40,17 @@ var team_chassis_label: Label
 var team_accent: ColorRect
 var garage_car_name_label: Label
 var race_driver_label: Label
+var world_environment: WorldEnvironment
+var sun_light: DirectionalLight3D
+var graphics_preset_picker: OptionButton
+var render_scale_picker: OptionButton
+var fullscreen_toggle: CheckButton
+var vsync_picker: OptionButton
+var settings_feedback: Label
+var graphics_preset: int = 2
+var render_scale_index: int = 1
+var fullscreen_enabled: bool = false
+var vsync_mode_index: int = 1
 var team_data: Array[Dictionary] = [
 	{"name":"McLaren","full":"McLAREN MASTERCARD FORMULA 1 TEAM","chassis":"MCL40  /  2026 CHALLENGER","engine":"Mercedes","color":Color("#ff8700"),"drivers":[{"name":"Lando Norris","number":"1"},{"name":"Oscar Piastri","number":"81"}]},
 	{"name":"Mercedes","full":"MERCEDES-AMG PETRONAS FORMULA ONE TEAM","chassis":"W17  /  2026 CHALLENGER","engine":"Mercedes","color":Color("#00a19c"),"drivers":[{"name":"George Russell","number":"63"},{"name":"Kimi Antonelli","number":"12"}]},
@@ -57,6 +68,7 @@ var team_data: Array[Dictionary] = [
 func _ready() -> void:
 	_setup_input()
 	_build_environment()
+	_load_graphics_settings()
 	var track := TrackScript.new()
 	track.name = "TestCircuit"
 	add_child(track)
@@ -96,7 +108,7 @@ func _add_key_action(action: String, keycode: Key) -> void:
 	InputMap.action_add_event(action, event)
 
 func _build_environment() -> void:
-	var world := WorldEnvironment.new()
+	world_environment = WorldEnvironment.new()
 	var environment := Environment.new()
 	environment.background_mode = Environment.BG_SKY
 	var sky := Sky.new()
@@ -116,16 +128,16 @@ func _build_environment() -> void:
 	environment.adjustment_enabled = true
 	environment.adjustment_contrast = 1.08
 	environment.adjustment_saturation = 1.06
-	world.environment = environment
-	add_child(world)
+	world_environment.environment = environment
+	add_child(world_environment)
 
-	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-48, -32, 0)
-	sun.light_energy = 1.35
-	sun.shadow_enabled = true
-	sun.directional_shadow_max_distance = 180.0
-	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
-	add_child(sun)
+	sun_light = DirectionalLight3D.new()
+	sun_light.rotation_degrees = Vector3(-48, -32, 0)
+	sun_light.light_energy = 1.35
+	sun_light.shadow_enabled = true
+	sun_light.directional_shadow_max_distance = 180.0
+	sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	add_child(sun_light)
 
 func _build_car() -> void:
 	car = CarScript.new()
@@ -488,6 +500,7 @@ func _build_frontend() -> void:
 
 	# Dedicated garage and settings content is built once and switched by page.
 	_build_garage_page()
+	_build_settings_page()
 	_show_frontend_page("home")
 
 func _add_frontend_nav(parent: HBoxContainer, caption: String, page: String) -> void:
@@ -587,6 +600,129 @@ func _build_garage_page() -> void:
 	garage_status.position = Vector2(22, 245)
 	_select_team(0)
 
+
+func _build_settings_page() -> void:
+	var settings := Control.new()
+	settings.name = "SettingsPage"
+	settings.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	settings.visible = false
+	frontend_root.add_child(settings)
+
+	var heading := _label(settings, "GRAPHICS & DISPLAY", 34, Color.WHITE)
+	heading.position = Vector2(54, 215)
+	var intro := _label(settings, "Tune visual quality, resolution scaling and display behaviour.", 14, Color(0.65, 0.72, 0.8))
+	intro.position = Vector2(58, 265)
+
+	var panel := _panel(settings, Vector2(52, 315), Vector2(700, 325))
+	var preset_caption := _label(panel, "GRAPHICS PRESET", 10, Color(0.65, 0.72, 0.8))
+	preset_caption.position = Vector2(24, 22)
+	graphics_preset_picker = OptionButton.new()
+	graphics_preset_picker.position = Vector2(24, 47)
+	graphics_preset_picker.size = Vector2(300, 38)
+	graphics_preset_picker.add_theme_font_size_override("font_size", 13)
+	for option in ["LOW", "MEDIUM", "HIGH", "ULTRA"]:
+		graphics_preset_picker.add_item(option)
+	graphics_preset_picker.item_selected.connect(_on_graphics_preset_selected)
+	panel.add_child(graphics_preset_picker)
+
+	var scale_caption := _label(panel, "3D RENDER SCALE", 10, Color(0.65, 0.72, 0.8))
+	scale_caption.position = Vector2(365, 22)
+	render_scale_picker = OptionButton.new()
+	render_scale_picker.position = Vector2(365, 47)
+	render_scale_picker.size = Vector2(300, 38)
+	render_scale_picker.add_theme_font_size_override("font_size", 13)
+	for option in ["50%", "75%", "100%", "125%"]:
+		render_scale_picker.add_item(option)
+	render_scale_picker.item_selected.connect(_on_render_scale_selected)
+	panel.add_child(render_scale_picker)
+
+	var display_caption := _label(panel, "DISPLAY MODE", 10, Color(0.65, 0.72, 0.8))
+	display_caption.position = Vector2(24, 112)
+	fullscreen_toggle = CheckButton.new()
+	fullscreen_toggle.text = "FULLSCREEN"
+	fullscreen_toggle.position = Vector2(20, 135)
+	fullscreen_toggle.add_theme_color_override("font_color", Color(0.9, 0.93, 0.97))
+	fullscreen_toggle.toggled.connect(_on_fullscreen_toggled)
+	panel.add_child(fullscreen_toggle)
+
+	var vsync_caption := _label(panel, "FRAME SYNCHRONISATION", 10, Color(0.65, 0.72, 0.8))
+	vsync_caption.position = Vector2(365, 112)
+	vsync_picker = OptionButton.new()
+	vsync_picker.position = Vector2(365, 137)
+	vsync_picker.size = Vector2(300, 38)
+	vsync_picker.add_theme_font_size_override("font_size", 13)
+	vsync_picker.add_item("OFF")
+	vsync_picker.add_item("ON")
+	vsync_picker.item_selected.connect(_on_vsync_selected)
+	panel.add_child(vsync_picker)
+
+	settings_feedback = _label(panel, "Changes apply immediately and are saved on this device.", 10, Color(0.58, 0.68, 0.78))
+	settings_feedback.position = Vector2(24, 255)
+	settings_feedback.size = Vector2(640, 24)
+
+	graphics_preset_picker.select(graphics_preset)
+	render_scale_picker.select(render_scale_index)
+	fullscreen_toggle.button_pressed = fullscreen_enabled
+	vsync_picker.select(vsync_mode_index)
+	_apply_graphics_settings()
+
+func _on_graphics_preset_selected(index: int) -> void:
+	graphics_preset = index
+	_apply_graphics_settings()
+	_save_graphics_settings()
+
+func _on_render_scale_selected(index: int) -> void:
+	render_scale_index = index
+	_apply_graphics_settings()
+	_save_graphics_settings()
+
+func _on_fullscreen_toggled(enabled: bool) -> void:
+	fullscreen_enabled = enabled
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if enabled else DisplayServer.WINDOW_MODE_WINDOWED)
+	_save_graphics_settings()
+
+func _on_vsync_selected(index: int) -> void:
+	vsync_mode_index = index
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if index == 1 else DisplayServer.VSYNC_DISABLED)
+	_save_graphics_settings()
+
+func _apply_graphics_settings() -> void:
+	if world_environment == null or world_environment.environment == null:
+		return
+	var environment := world_environment.environment
+	var preset_shadow_distances := [70.0, 110.0, 180.0, 260.0]
+	var preset_glow := [false, false, true, true]
+	var preset_glow_strength := [0.0, 0.0, 0.55, 0.8]
+	var preset_shadow_enabled := [false, true, true, true]
+	sun_light.shadow_enabled = preset_shadow_enabled[graphics_preset]
+	sun_light.directional_shadow_max_distance = preset_shadow_distances[graphics_preset]
+	environment.glow_enabled = preset_glow[graphics_preset]
+	environment.glow_strength = preset_glow_strength[graphics_preset]
+	var scale_values := [0.5, 0.75, 1.0, 1.25]
+	get_viewport().scaling_3d_scale = scale_values[render_scale_index]
+	if settings_feedback != null:
+		var names := ["LOW", "MEDIUM", "HIGH", "ULTRA"]
+		settings_feedback.text = "APPLIED  /  %s QUALITY  •  %d%% RENDER SCALE" % [names[graphics_preset], int(scale_values[render_scale_index] * 100.0)]
+
+func _save_graphics_settings() -> void:
+	var config := ConfigFile.new()
+	config.set_value("graphics", "preset", graphics_preset)
+	config.set_value("graphics", "render_scale", render_scale_index)
+	config.set_value("display", "fullscreen", fullscreen_enabled)
+	config.set_value("display", "vsync", vsync_mode_index)
+	config.save("user://settings.cfg")
+
+func _load_graphics_settings() -> void:
+	var config := ConfigFile.new()
+	if config.load("user://settings.cfg") != OK:
+		return
+	graphics_preset = clampi(int(config.get_value("graphics", "preset", 2)), 0, 3)
+	render_scale_index = clampi(int(config.get_value("graphics", "render_scale", 1)), 0, 3)
+	fullscreen_enabled = bool(config.get_value("display", "fullscreen", false))
+	vsync_mode_index = clampi(int(config.get_value("display", "vsync", 1)), 0, 1)
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen_enabled else DisplayServer.WINDOW_MODE_WINDOWED)
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync_mode_index == 1 else DisplayServer.VSYNC_DISABLED)
+
 func _on_team_selected(index: int) -> void:
 	_select_team(index)
 
@@ -633,6 +769,9 @@ func _show_frontend_page(page: String) -> void:
 	var garage_page := frontend_root.get_node_or_null("GaragePage")
 	if garage_page != null:
 		garage_page.visible = page == "garage"
+	var settings_page := frontend_root.get_node_or_null("SettingsPage")
+	if settings_page != null:
+		settings_page.visible = page == "settings"
 	for child in frontend_root.get_children():
 		if child.name == "Header" or child.name == "MainNavigation":
 			child.visible = true
@@ -641,8 +780,8 @@ func _show_frontend_page(page: String) -> void:
 	var race_action := frontend_root.get_node_or_null("RaceAction")
 	if race_action != null:
 		race_action.visible = page == "race"
-	frontend_page_title.visible = page != "garage"
-	frontend_page_body.visible = page != "garage"
+	frontend_page_title.visible = page != "garage" and page != "settings"
+	frontend_page_body.visible = page != "garage" and page != "settings"
 	if page == "home":
 		frontend_page_title.text = "THE GRID IS YOURS."
 		frontend_page_body.text = "Build your weekend. Find the limit. Own every lap."
@@ -650,8 +789,8 @@ func _show_frontend_page(page: String) -> void:
 		frontend_page_title.text = "RACE WEEKEND"
 		frontend_page_body.text = "Your test circuit is ready. Enter the cockpit when you are."
 	elif page == "settings":
-		frontend_page_title.text = "RACE SETTINGS"
-		frontend_page_body.text = "Graphics, controls and assists will be configured here."
+		frontend_page_title.visible = false
+		frontend_page_body.visible = false
 	elif page == "garage":
 		frontend_page_title.visible = false
 		frontend_page_body.visible = false
