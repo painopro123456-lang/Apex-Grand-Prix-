@@ -190,6 +190,8 @@ func _update_camera(delta: float) -> void:
 	var target_position := car.global_position - forward * 11.0 + Vector3.UP * 5.0
 	camera.global_position = camera.global_position.lerp(target_position, 1.0 - exp(-5.0 * delta))
 	camera.look_at(car.global_position + forward * 5.0 + Vector3.UP * 1.0, Vector3.UP)
+	var speed_ratio := clampf(car.speed_kmh / 350.0, 0.0, 1.0)
+	camera.fov = lerpf(64.0, 78.0, speed_ratio)
 
 func _build_hud() -> void:
 	hud = CanvasLayer.new()
