@@ -200,7 +200,7 @@ func _build_curbs() -> void:
 		var tangent := (_center_at(next_t) - center).normalized()
 		var yaw := atan2(tangent.x, tangent.z)
 		for side_sign in [-1.0, 1.0]:
-			var curb_position := center + side * (road_width * 0.5 + 0.75) * side_sign
+			var curb_position: Vector3 = center + side * (road_width * 0.5 + 0.75) * side_sign
 			var basis := Basis(Vector3.UP, yaw)
 			multimesh.set_instance_transform(instance, Transform3D(basis, curb_position + Vector3.UP * 0.1))
 			var stripe_color := Color(0.82, 0.045, 0.055) if (i / 3) % 2 == 0 else Color(0.92, 0.92, 0.9)
@@ -219,10 +219,10 @@ func _build_barriers() -> void:
 		for i in range(segments):
 			var t0 := float(i) / float(segments)
 			var t1 := float(i + 1) / float(segments)
-			var p0 := _center_at(t0) + _side_at(t0) * road_width * 0.5 * side_sign
-			var p1 := _center_at(t1) + _side_at(t1) * road_width * 0.5 * side_sign
-			var midpoint := (p0 + p1) * 0.5
-			var length := p0.distance_to(p1) + 0.25
+			var p0: Vector3 = _center_at(t0) + _side_at(t0) * road_width * 0.5 * side_sign
+			var p1: Vector3 = _center_at(t1) + _side_at(t1) * road_width * 0.5 * side_sign
+			var midpoint: Vector3 = (p0 + p1) * 0.5
+			var length: float = p0.distance_to(p1) + 0.25
 			var wall := StaticBody3D.new()
 			var visual := MeshInstance3D.new()
 			var box := BoxMesh.new()
@@ -280,7 +280,7 @@ func _build_track_markings() -> void:
 		var tangent := (_center_at(next_t) - center).normalized()
 		var yaw := atan2(tangent.x, tangent.z)
 		for side_sign in [-1.0, 1.0]:
-			var point := center + _side_at(t) * (road_width * 0.5 - 0.28) * side_sign
+			var point: Vector3 = center + _side_at(t) * (road_width * 0.5 - 0.28) * side_sign
 			multimesh.set_instance_transform(index, Transform3D(Basis(Vector3.UP, yaw), point + Vector3.UP * 0.055))
 			index += 1
 	var markings := MultiMeshInstance3D.new()
