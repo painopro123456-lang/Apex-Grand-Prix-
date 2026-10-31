@@ -17,6 +17,12 @@ var countdown_step: int = -1
 var countdown_timer: float = 0.0
 var race_started: bool = false
 var race_time: float = 0.0
+var lap_number: int = 0
+var lap_time: float = 0.0
+var best_lap_time: float = 0.0
+var last_car_position: Vector3 = Vector3.ZERO
+var lap_label: Label
+var best_lap_label: Label
 
 func _ready() -> void:
 	_setup_input()
@@ -27,12 +33,14 @@ func _ready() -> void:
 	_build_car()
 	_build_camera()
 	_build_hud()
+	last_car_position = car.global_position
 	_begin_start_sequence()
 
 func _process(delta: float) -> void:
 	_update_camera(delta)
 	_update_hud(delta)
 	_update_start_sequence(delta)
+	_update_lap_detection(delta)
 
 func _setup_input() -> void:
 	_add_key_action("accelerate", KEY_W)
@@ -69,19 +77,28 @@ func _build_environment() -> void:
 	environment.sky = sky
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
 	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	environment.glow_enabled = true
+	environment.glow_intensity = 0.28
+	environment.glow_strength = 0.7
+	environment.glow_bloom = 0.08
+	environment.adjustment_enabled = true
+	environment.adjustment_contrast = 1.08
+	environment.adjustment_saturation = 1.06
 	world.environment = environment
 	add_child(world)
 
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-48, -32, 0)
-	sun.light_energy = 1.25
+	sun.light_energy = 1.35
 	sun.shadow_enabled = true
+	sun.directional_shadow_max_distance = 180.0
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	add_child(sun)
 
 func _build_car() -> void:
 	car = CarScript.new()
 	car.name = "PlayerCar"
-	car.position = Vector3(105, 1.0, 0)
+	car.position = Vector3(105, 1.0, -8)
 	car.rotation.y = PI
 	var collider := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
@@ -142,6 +159,14 @@ func _build_hud() -> void:
 	race_time_label.anchor_left = 1.0
 	race_time_label.anchor_right = 1.0
 	race_time_label.position = Vector2(-220, 30)
+	lap_label = _label(root, "LAP  0 / 5", 17, Color.WHITE)
+	lap_label.anchor_left = 1.0
+	lap_label.anchor_right = 1.0
+	lap_label.position = Vector2(-220, 60)
+	best_lap_label = _label(root, "BEST  --:--.---", 13, Color(0.65, 0.82, 1.0))
+	best_lap_label.anchor_left = 1.0
+	best_lap_label.anchor_right = 1.0
+	best_lap_label.position = Vector2(-220, 86)
 
 	countdown_label = _label(root, "", 68, Color.WHITE)
 	countdown_label.anchor_left = 0.5
@@ -214,9 +239,13 @@ func _update_hud(delta: float) -> void:
 		return
 	if race_started:
 		race_time += delta
+		if lap_number > 0:
+			lap_time += delta
 	speed_label.text = "%03d" % int(car.speed_kmh)
 	telemetry_label.text = "GEAR %d   RPM %05d\nERS %02d%%   TYRES %d°C   WEAR %d%%\nDRS %s" % [car.current_gear, int(car.engine_rpm), int(car.ers_charge), int(car.tyre_temperature), int(car.tyre_wear * 100.0), "OPEN" if car.drs_active else "CLOSED"]
 	race_time_label.text = _format_time(race_time)
+	lap_label.text = "LAP  %d / 5" % lap_number
+	best_lap_label.text = "BEST  %s" % (_format_time(best_lap_time) if best_lap_time > 0.0 else "--:--.---")
 	if Input.is_action_just_pressed("reset_car"):
 		car.reset_vehicle(Vector3(105, 1.0, 0), PI)
 
@@ -224,3 +253,15 @@ func _format_time(value: float) -> String:
 	var minutes := int(value / 60.0)
 	var seconds := fmod(value, 60.0)
 	return "%02d:%06.3f" % [minutes, seconds]
+
+func _update_lap_detection(delta: float) -> void:
+	if car == null:
+		return
+	var current_position := car.global_position
+	if race_started and last_car_position.z < 0.0 and current_position.z >= 0.0 and current_position.x > 92.0 and current_position.x < 132.0:
+		if lap_number > 0 and lap_time > 5.0:
+			if best_lap_time <= 0.0 or lap_time < best_lap_time:
+				best_lap_time = lap_time
+			lap_time = 0.0
+		lap_number += 1
+	last_car_position = current_position
