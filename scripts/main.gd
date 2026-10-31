@@ -368,10 +368,12 @@ func _begin_start_sequence() -> void:
 	countdown_step = 0
 	countdown_timer = 0.0
 	lights_out_delay = randf_range(0.8, 2.8)
+	lights_out_display_timer = 0.0
 	countdown_label.text = "READY"
 	for light in start_lights:
 		light.color = Color(0.12, 0.025, 0.035)
 
+func _update_start_sequence(delta: float) -> void:
 	if race_started:
 		if lights_out_display_timer > 0.0:
 			lights_out_display_timer -= delta
