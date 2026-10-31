@@ -18,6 +18,9 @@ var _racing_line: MultiMeshInstance3D
 var _racing_multimesh: MultiMesh
 var _racing_path: PackedVector2Array = PackedVector2Array()
 var _racing_target_speeds: PackedFloat32Array = PackedFloat32Array()
+var _racing_cumulative_distances: PackedFloat32Array = PackedFloat32Array()
+var _racing_color_states: PackedByteArray = PackedByteArray()
+const RACING_LINE_LOOKAHEAD_M: float = 240.0
 
 func _ready() -> void:
 	_load_geometry()
@@ -263,6 +266,8 @@ func _calculate_fastest_racing_path() -> void:
 	var count := points.size()
 	_racing_path.clear()
 	_racing_target_speeds.clear()
+	_racing_cumulative_distances.clear()
+	_racing_color_states.clear()
 	var offsets := PackedFloat32Array()
 	offsets.resize(count)
 	for i in range(count):
@@ -308,6 +313,11 @@ func _calculate_fastest_racing_path() -> void:
 		var curvature := 2.0 * absf(incoming.x * outgoing.y - incoming.y * outgoing.x) / (a * b * chord)
 		var target_mps := sqrt(12.5 / maxf(curvature, 0.00012))
 		_racing_target_speeds.append(clampf(target_mps * 3.6, 42.0, 330.0))
+	_racing_cumulative_distances.resize(count + 1)
+	_racing_cumulative_distances[0] = 0.0
+	for i in range(count):
+		_racing_cumulative_distances[i + 1] = _racing_cumulative_distances[i] + segment_lengths[i]
+
 	for pass_index in range(3):
 		for step in range(count * 2):
 			var i := step % count
@@ -332,6 +342,9 @@ func _build_racing_line() -> void:
 	_racing_multimesh.use_colors = true
 	_racing_multimesh.mesh = segment_mesh
 	_racing_multimesh.instance_count = count
+	_racing_color_states.resize(count)
+	for i in range(count):
+		_racing_color_states[i] = 0
 	for i in range(count):
 		var a := _racing_path[i]
 		var b := _racing_path[(i + 1) % count]
@@ -354,17 +367,45 @@ func _build_racing_line() -> void:
 	add_child(_racing_line)
 
 func update_racing_line_feedback(world_position: Vector3, speed_kmh: float) -> void:
-	if _racing_multimesh == null or _racing_path.is_empty():
+	if _racing_multimesh == null or _racing_path.is_empty() or _racing_cumulative_distances.size() != _racing_path.size() + 1:
 		return
-	# Compare the car's live speed with the ideal speed at every point:
-	# green = safely below target, yellow = approaching target, red = too fast.
+
+	# Locate the player's progress along the ideal racing path, not just the
+	# nearest track-centre point. Only the upcoming section reacts to live speed.
+	var nearest_index := 0
+	var nearest_distance_squared := INF
+	var car_position := Vector2(world_position.x, world_position.z)
 	for i in range(_racing_path.size()):
-		var target_speed := _racing_target_speeds[i]
+		var distance_squared := car_position.distance_squared_to(_racing_path[i])
+		if distance_squared < nearest_distance_squared:
+			nearest_distance_squared = distance_squared
+			nearest_index = i
+
+	var lap_distance := _racing_cumulative_distances[_racing_path.size()]
+	var player_distance := _racing_cumulative_distances[nearest_index]
+	var count := _racing_path.size()
+	for i in range(count):
+		var forward_distance := _racing_cumulative_distances[i] - player_distance
+		if forward_distance < 0.0:
+			forward_distance += lap_distance
+
+		# Outside the forward look-ahead, keep the guide neutral green. This
+		# prevents one speed reading from repainting the whole circuit at once.
+		var state := 0 # green / accelerate
+		if forward_distance <= RACING_LINE_LOOKAHEAD_M:
+			var target_speed := _racing_target_speeds[i]
+			if speed_kmh > target_speed + 8.0:
+				state = 2 # red / brake
+			elif speed_kmh > target_speed - 8.0:
+				state = 1 # yellow / lift
+		if _racing_color_states[i] == state:
+			continue
+		_racing_color_states[i] = state
 		var line_color := Color("#42e58b")
-		if speed_kmh > target_speed + 8.0:
-			line_color = Color("#ff3939")
-		elif speed_kmh > target_speed - 8.0:
+		if state == 1:
 			line_color = Color("#ffd34e")
+		elif state == 2:
+			line_color = Color("#ff3939")
 		_racing_multimesh.set_instance_color(i, line_color)
 
 
