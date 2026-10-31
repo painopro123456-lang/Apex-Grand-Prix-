@@ -301,7 +301,7 @@ func _build_hud() -> void:
 	speed_label.add_theme_constant_override("shadow_offset_y", 2)
 	var unit := _label(speed_panel, "KM/H", 12, Color(0.36, 0.78, 1.0))
 	unit.position = Vector2(148, 61)
-	var speed_note := _label(speed_panel, "L  /  RACING LINE ON-OFF", 8, Color(0.42, 0.52, 0.64))
+	var speed_note := _label(speed_panel, "L TOGGLE  |  GREEN GO  /  YELLOW LIFT  /  RED BRAKE", 8, Color(0.42, 0.52, 0.64))
 	speed_note.position = Vector2(18, 98)
 
 	# Telemetry card, lower-right.
