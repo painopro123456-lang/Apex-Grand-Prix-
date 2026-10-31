@@ -1,9 +1,23 @@
 extends Node3D
 
 const CarScript = preload("res://scripts/f1_car.gd")
-const TrackScript = preload("res://scripts/oval_circuit.gd")
+const RealCircuitScript = preload("res://scripts/real_circuit.gd")
 
 var car: F1CarController
+var current_track: RealCircuit
+var track_picker: OptionButton
+var selected_track_id: String = "Austin"
+var circuit_catalog: Array[Dictionary] = [
+	{"id":"Austin","name":"Circuit of the Americas","country":"USA"},
+	{"id":"Spielberg","name":"Red Bull Ring","country":"Austria"},
+	{"id":"Silverstone","name":"Silverstone Circuit","country":"United Kingdom"},
+	{"id":"Monza","name":"Autodromo Nazionale Monza","country":"Italy"},
+	{"id":"Spa","name":"Circuit de Spa-Francorchamps","country":"Belgium"},
+	{"id":"Suzuka","name":"Suzuka International Racing Course","country":"Japan"},
+	{"id":"Melbourne","name":"Albert Park Circuit","country":"Australia"},
+	{"id":"Sakhir","name":"Bahrain International Circuit","country":"Bahrain"},
+	{"id":"Budapest","name":"Hungaroring","country":"Hungary"}
+]
 var camera: Camera3D
 var hud: CanvasLayer
 var countdown_label: Label
@@ -70,11 +84,10 @@ func _ready() -> void:
 	_setup_input()
 	_build_environment()
 	_load_graphics_settings()
-	var track := TrackScript.new()
-	track.name = "TestCircuit"
-	add_child(track)
+	_load_selected_circuit()
 	_build_car()
-	car.set_circuit(track)
+	car.set_circuit(current_track)
+	car.reset_vehicle(current_track.start_position, current_track.start_heading)
 	_build_camera()
 	_build_hud()
 	_build_frontend()
@@ -381,7 +394,7 @@ func _update_hud(delta: float) -> void:
 	lap_label.text = "LAP  %d / 5" % lap_number
 	best_lap_label.text = "BEST  %s" % (_format_time(best_lap_time) if best_lap_time > 0.0 else "--:--.---")
 	if Input.is_action_just_pressed("reset_car"):
-		car.reset_vehicle(Vector3(105, 1.0, -8), PI)
+		car.reset_vehicle(current_track.start_position, current_track.start_heading)
 		last_car_position = car.global_position
 
 func _format_time(value: float) -> String:
@@ -393,7 +406,7 @@ func _update_lap_detection(delta: float) -> void:
 	if car == null:
 		return
 	var current_position := car.global_position
-	if race_started and last_car_position.z < 0.0 and current_position.z >= 0.0 and current_position.x > 92.0 and current_position.x < 132.0:
+	if race_started and current_track != null and current_track.has_crossed_start_line(last_car_position, current_position):
 		if lap_number > 0 and lap_time > 5.0:
 			if best_lap_time <= 0.0 or lap_time < best_lap_time:
 				best_lap_time = lap_time
@@ -518,11 +531,26 @@ func _build_frontend() -> void:
 	garage_button.pressed.connect(func(): _show_frontend_page("garage"))
 
 	var race_action := _frontend_button(frontend_root, "ENTER THE COCKPIT", true)
-	race_action.position = Vector2(58, 340)
+	race_action.position = Vector2(58, 405)
 	race_action.size = Vector2(250, 44)
 	race_action.name = "RaceAction"
 	race_action.visible = false
 	race_action.pressed.connect(_enter_race)
+
+	var circuit_caption := _label(frontend_root, "SELECT GRAND PRIX CIRCUIT", 10, Color(0.65, 0.72, 0.8))
+	circuit_caption.position = Vector2(58, 326)
+	track_picker = OptionButton.new()
+	track_picker.position = Vector2(58, 348)
+	track_picker.size = Vector2(430, 40)
+	track_picker.add_theme_font_size_override("font_size", 13)
+	for circuit in circuit_catalog:
+		track_picker.add_item("%s  /  %s" % [circuit["name"], circuit["country"]])
+	track_picker.item_selected.connect(_on_track_selected)
+	frontend_root.add_child(track_picker)
+	track_picker.select(0)
+	track_picker.visible = false
+	circuit_caption.visible = false
+	circuit_caption.name = "CircuitCaption"
 
 	var footer := _label(frontend_root, "APEX GRAND PRIX     •     DEVELOPMENT BUILD", 9, Color(0.39, 0.45, 0.54))
 	footer.anchor_top = 1.0
@@ -819,6 +847,11 @@ func _show_frontend_page(page: String) -> void:
 	var race_action := frontend_root.get_node_or_null("RaceAction")
 	if race_action != null:
 		race_action.visible = page == "race"
+	if track_picker != null:
+		track_picker.visible = page == "race"
+	var circuit_caption := frontend_root.get_node_or_null("CircuitCaption")
+	if circuit_caption != null:
+		circuit_caption.visible = page == "race"
 	frontend_page_title.visible = page != "garage" and page != "settings"
 	frontend_page_body.visible = page != "garage" and page != "settings"
 	if page == "home":
@@ -826,7 +859,7 @@ func _show_frontend_page(page: String) -> void:
 		frontend_page_body.text = "Build your weekend. Find the limit. Own every lap."
 	elif page == "race":
 		frontend_page_title.text = "RACE WEEKEND"
-		frontend_page_body.text = "Your test circuit is ready. Enter the cockpit when you are."
+		frontend_page_body.text = "Choose a real Grand Prix circuit and take your place on the grid."
 	elif page == "settings":
 		frontend_page_title.visible = false
 		frontend_page_body.visible = false
@@ -834,10 +867,30 @@ func _show_frontend_page(page: String) -> void:
 		frontend_page_title.visible = false
 		frontend_page_body.visible = false
 
+func _load_selected_circuit() -> void:
+	if current_track != null:
+		current_track.queue_free()
+	current_track = RealCircuitScript.new()
+	current_track.circuit_id = selected_track_id
+	current_track.name = selected_track_id + "Circuit"
+	add_child(current_track)
+	if car != null:
+		car.set_circuit(current_track)
+		car.reset_vehicle(current_track.start_position, current_track.start_heading)
+		last_car_position = car.global_position
+
+func _on_track_selected(index: int) -> void:
+	if index < 0 or index >= circuit_catalog.size():
+		return
+	selected_track_id = str(circuit_catalog[index]["id"])
+	_load_selected_circuit()
+	if frontend_page_body != null:
+		frontend_page_body.text = "%s  /  %s     •     %.2f KM" % [circuit_catalog[index]["name"], circuit_catalog[index]["country"], current_track.lap_length_m / 1000.0]
+
 func _enter_race() -> void:
 	frontend_layer.visible = false
 	hud.visible = true
-	car.reset_vehicle(Vector3(105, 1.0, -8), PI)
+	car.reset_vehicle(current_track.start_position, current_track.start_heading)
 	last_car_position = car.global_position
 	car.set_physics_process(false)
 	race_started = false
