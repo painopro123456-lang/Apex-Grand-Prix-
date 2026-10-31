@@ -11,6 +11,7 @@ var status_label: Label
 var speed_label: Label
 var position_label: Label
 var race_time_label: Label
+var telemetry_label: Label
 var start_lights: Array[ColorRect] = []
 var countdown_step: int = -1
 var countdown_timer: float = 0.0
@@ -44,6 +45,8 @@ func _setup_input() -> void:
 	_add_key_action("steer_right", KEY_RIGHT)
 	_add_key_action("handbrake", KEY_SPACE)
 	_add_key_action("reset_car", KEY_R)
+	_add_key_action("drs", KEY_F)
+	_add_key_action("ers_deploy", KEY_E)
 
 func _add_key_action(action: String, keycode: Key) -> void:
 	if not InputMap.has_action(action):
@@ -130,6 +133,11 @@ func _build_hud() -> void:
 	var unit := _label(speed_panel, "KM/H", 12, Color(0.65, 0.76, 0.9))
 	unit.position = Vector2(102, 62)
 
+	telemetry_label = _label(root, "GEAR 1   RPM 4,200\nERS 100%   TYRES 82°C", 14, Color(0.88, 0.92, 0.98))
+	telemetry_label.anchor_left = 1.0
+	telemetry_label.anchor_right = 1.0
+	telemetry_label.position = Vector2(-285, 82)
+
 	race_time_label = _label(root, "00:00.000", 22, Color.WHITE)
 	race_time_label.anchor_left = 1.0
 	race_time_label.anchor_right = 1.0
@@ -207,6 +215,7 @@ func _update_hud(delta: float) -> void:
 	if race_started:
 		race_time += delta
 	speed_label.text = "%03d" % int(car.speed_kmh)
+	telemetry_label.text = "GEAR %d   RPM %05d\nERS %02d%%   TYRES %d°C   WEAR %d%%\nDRS %s" % [car.current_gear, int(car.engine_rpm), int(car.ers_charge), int(car.tyre_temperature), int(car.tyre_wear * 100.0), "OPEN" if car.drs_active else "CLOSED"]
 	race_time_label.text = _format_time(race_time)
 	if Input.is_action_just_pressed("reset_car"):
 		car.reset_vehicle(Vector3(105, 1.0, 0), PI)
