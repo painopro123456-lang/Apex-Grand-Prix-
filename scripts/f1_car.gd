@@ -267,6 +267,10 @@ func _add_car_box(parent: Node3D, part_name: String, size: Vector3, at: Vector3,
 	part.mesh = mesh
 	part.material_override = material
 	part.position = at
+	if part_name in ["CarbonMonocoque", "TaperedNoseCone", "Sidepod", "EngineCover"]:
+		part.add_to_group("livery_primary")
+	if part_name in ["NoseTip"]:
+		part.add_to_group("livery_accent")
 	parent.add_child(part)
 	return part
 
@@ -280,6 +284,10 @@ func _add_car_sphere(parent: Node3D, part_name: String, at: Vector3, scale_value
 	part.material_override = material
 	part.position = at
 	part.scale = scale_value
+	if part_name in ["CarbonMonocoque", "Sidepod", "EngineCover"]:
+		part.add_to_group("livery_primary")
+	if part_name == "NoseTip":
+		part.add_to_group("livery_accent")
 	parent.add_child(part)
 	return part
 
@@ -318,6 +326,7 @@ func _build_aero_visuals() -> void:
 	nose_mesh.rings = 8
 	nose.mesh = nose_mesh
 	nose.material_override = body_paint
+	nose.add_to_group("livery_primary")
 	nose.position = Vector3(0, 0.24, -1.52)
 	nose.rotation.x = PI * 0.5
 	add_child(nose)
@@ -336,7 +345,8 @@ func _build_aero_visuals() -> void:
 	# Front wing: main plane, two flaps and endplates.
 	_add_car_box(self, "FrontWingMainPlane", Vector3(4.35, 0.12, 0.42), Vector3(0, -0.12, -2.72), carbon)
 	_add_car_box(self, "FrontWingFlap", Vector3(4.05, 0.075, 0.2), Vector3(0, 0.0, -2.48), carbon_edge)
-	_add_car_box(self, "FrontWingUpperFlap", Vector3(3.72, 0.055, 0.16), Vector3(0, 0.12, -2.39), accent)
+	var front_accent := _add_car_box(self, "FrontWingUpperFlap", Vector3(3.72, 0.055, 0.16), Vector3(0, 0.12, -2.39), accent)
+	front_accent.add_to_group("livery_accent")
 	for side in [-1.0, 1.0]:
 		_add_car_box(self, "FrontWingEndplate", Vector3(0.075, 0.38, 0.56), Vector3(side * 2.13, 0.02, -2.63), carbon)
 		_add_car_box(self, "FrontWingFootplate", Vector3(0.3, 0.045, 0.62), Vector3(side * 1.88, -0.2, -2.6), carbon_edge)
@@ -353,12 +363,14 @@ func _build_aero_visuals() -> void:
 	_add_car_sphere(self, "EngineCover", Vector3(0, 0.47, 1.03), Vector3(0.43, 0.48, 0.9), body_paint)
 	_add_car_sphere(self, "AirIntake", Vector3(0, 0.91, 0.52), Vector3(0.23, 0.17, 0.2), carbon)
 	_add_car_box(self, "RearWingMainPlane", Vector3(2.35, 0.11, 0.48), Vector3(0, 1.22, 2.08), carbon)
-	_add_car_box(self, "RearWingUpperFlap", Vector3(2.2, 0.075, 0.22), Vector3(0, 1.4, 2.16), accent)
+	var rear_accent := _add_car_box(self, "RearWingUpperFlap", Vector3(2.2, 0.075, 0.22), Vector3(0, 1.4, 2.16), accent)
+	rear_accent.add_to_group("livery_accent")
 	_add_car_box(self, "RearWingEndplateL", Vector3(0.07, 0.52, 0.58), Vector3(-1.13, 1.17, 2.08), carbon)
 	_add_car_box(self, "RearWingEndplateR", Vector3(0.07, 0.52, 0.58), Vector3(1.13, 1.17, 2.08), carbon)
 	_add_car_beam(self, "RearWingSupportL", Vector3(-0.3, 0.58, 1.7), Vector3(-0.3, 1.2, 2.05), 0.045, carbon_edge)
 	_add_car_beam(self, "RearWingSupportR", Vector3(0.3, 0.58, 1.7), Vector3(0.3, 1.2, 2.05), 0.045, carbon_edge)
-	_add_car_box(self, "RearCrashStructure", Vector3(0.22, 0.2, 0.55), Vector3(0, 0.05, 1.95), accent)
+	var crash_accent := _add_car_box(self, "RearCrashStructure", Vector3(0.22, 0.2, 0.55), Vector3(0, 0.05, 1.95), accent)
+	crash_accent.add_to_group("livery_accent")
 
 func _update_tyre_model(delta: float) -> void:
 	var slip_heat := absf(steer_input) * absf(_longitudinal_speed) * 0.018
@@ -383,3 +395,13 @@ func reset_vehicle(at_position: Vector3, heading: float = 0.0) -> void:
 	impact_cooldown = 0.0
 	for overlay in tyre_gravel_overlays:
 		overlay.scale = Vector3.ONE * 0.001
+
+func set_livery(primary_color: Color) -> void:
+	var primary := _visual_material(primary_color, 0.52, 0.24)
+	var accent := _visual_material(primary_color.lightened(0.24), 0.48, 0.22)
+	for part in get_tree().get_nodes_in_group("livery_primary"):
+		if is_instance_valid(part) and part.get_parent() == self:
+			part.material_override = primary
+	for part in get_tree().get_nodes_in_group("livery_accent"):
+		if is_instance_valid(part) and part.get_parent() == self:
+			part.material_override = accent
