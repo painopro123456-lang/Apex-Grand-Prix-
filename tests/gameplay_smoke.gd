@@ -14,7 +14,7 @@ func _run_gameplay_smoke() -> void:
 	root.add_child(game)
 	await process_frame
 
-	var car := game.get("car") as F1CarController
+	var car = game.get("car")
 	if car == null:
 		push_error("Gameplay smoke test: player car was not created.")
 		quit(1)
