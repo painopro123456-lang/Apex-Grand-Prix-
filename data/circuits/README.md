@@ -15,6 +15,8 @@ Included layouts:
 - Albert Park (Melbourne)
 - Bahrain International Circuit (Sakhir)
 - Hungaroring (Budapest)
+- Circuit Gilles-Villeneuve (Montreal)
+- Shanghai International Circuit
 
 The upstream repository is distributed under GNU LGPL v3. Its license text is included at `licenses/TUMFTM-racetrack-database-LICENSE.txt`.
 
