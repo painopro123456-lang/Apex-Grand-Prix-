@@ -48,7 +48,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          xvfb-run -a env LIBGL_ALWAYS_SOFTWARE=1 godot --rendering-method gl_compatibility --rendering-driver opengl3 --audio-driver Dummy --path . --quit-after 300 2>&1 | tee /tmp/godot-startup.log
+          xvfb-run -a env LIBGL_ALWAYS_SOFTWARE=1 godot --rendering-method gl_compatibility --rendering-driver opengl3 --audio-driver Dummy --path . --quit-after 90 2>&1 | tee /tmp/godot-startup.log
           if grep -E "SCRIPT ERROR:|Parse Error:|Compile Error:|ERROR:" /tmp/godot-startup.log; then
             echo "Godot startup reported script or runtime errors."
             exit 1
