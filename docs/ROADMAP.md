@@ -39,7 +39,8 @@ This roadmap separates what exists from what is planned. A feature is not consid
 - [ ] Full PBR asset set, reflections, volumetrics and high-end shadow tuning
 - [ ] Cockpit camera, TV cameras, replay and photo mode
 - [ ] Engine, tyre, wind, crowd and pit audio
-- [ ] Scalable graphics presets and performance profiling on target hardware
+- [x] Graphics presets (Low / Medium / High / Ultra), 3D render scale, fullscreen and VSync controls with local settings persistence
+- [ ] Performance profiling and optimisation passes across different hardware
 
 ## Release engineering
 - [ ] Godot headless import and project validation
@@ -48,8 +49,12 @@ This roadmap separates what exists from what is planned. A feature is not consid
 - [ ] Verify installer/executable on a clean Windows machine
 
 ## Quality gate
-No feature is marked done based only on code being committed. It must be opened in Godot, tested in motion, and checked for regressions. The current prototype has not yet been validated in-engine or benchmarked on the 4 GB RAM / integrated-GPU target.
+No feature is marked done based only on code being committed. It must be opened in Godot, tested in motion, and checked for regressions. The current prototype has not yet been validated in-engine. The project should be optimised generally, without limiting visual quality to integrated-GPU hardware.
 
 
 ## Current implementation note
 The latest pass adds a procedural asphalt surface shader, continuous track-edge paint, improved lighting/post-processing, corrected start-line orientation and a first start/finish lap gate with best-lap display. These are still prototype systems: the lap gate needs validation through a complete lap in Godot, and the project still needs a purpose-built high-detail car asset, suspension, AI and real circuit content.
+
+
+## Graphics settings pass
+The settings page now exposes Low, Medium, High and Ultra presets, 3D render scale, fullscreen mode and VSync. Changes apply immediately and are saved to the local user settings file. These controls are implemented in code but still need in-engine validation on supported renderers and hardware.
