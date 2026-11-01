@@ -59,15 +59,30 @@ jobs:
       - name: Export Windows EXE
         shell: bash
         run: |
-          set -o pipefail
           mkdir -p build
+          set +e
           godot --headless --path . --export-release "Windows Desktop" "build/Apex-Grand-Prix.exe" 2>&1 | tee /tmp/godot-export.log
+          export_status=${PIPESTATUS[0]}
+          set -e
+
+          # Godot 4.3 can segfault during shutdown on hosted Linux runners
+          # after it has already written the complete embedded-PCK executable.
+          # Only tolerate that shutdown crash when a substantial EXE exists.
+          if [ "$export_status" -ne 0 ] && [ ! -s "build/Apex-Grand-Prix.exe" ]; then
+            echo "Godot export failed before producing the Windows executable (exit $export_status)."
+            exit "$export_status"
+          fi
+
           test -s "build/Apex-Grand-Prix.exe"
           size=$(stat -c%s "build/Apex-Grand-Prix.exe")
           echo "Windows executable size: $size bytes"
           if [ "$size" -lt 1000000 ]; then
             echo "Exported EXE is unexpectedly small."
             exit 1
+          fi
+          file "build/Apex-Grand-Prix.exe"
+          if [ "$export_status" -ne 0 ]; then
+            echo "Godot exited $export_status after writing the EXE; artifact will be uploaded for verification."
           fi
 
       - name: Upload EXE artifact
